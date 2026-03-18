@@ -1,4 +1,4 @@
-package magic_touch_game.knn;
+package draw_to_survive.knn;
 
 import java.util.ArrayList;
 import java.util.Collections;

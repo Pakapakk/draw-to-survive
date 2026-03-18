@@ -1,4 +1,4 @@
-package magic_touch_game.knn;
+package draw_to_survive.knn;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -10,9 +10,9 @@ public class DatasetCompiler {
 
     public static void main(String[] args) {
         try {
-            String inputPath = "src/main/java/magic_touch_game/dataset/symbol_dataset.png";
-            String vectorOutputPath = "src/main/java/magic_touch_game/resources/dataset_vectors.txt";
-//            String slicedOutputBase = "src/main/java/magic_touch_game/dataset/sliced";
+            String inputPath = "src/main/java/draw_to_survive/dataset/symbol_dataset.png";
+            String vectorOutputPath = "src/main/java/draw_to_survive/resources/dataset_vectors.txt";
+//            String slicedOutputBase = "src/main/java/draw_to_survive/dataset/sliced";
 
             BufferedImage img = ImageIO.read(new File(inputPath));
 

@@ -1,8 +1,8 @@
-package magic_touch_game.MainGame;
+package draw_to_survive.MainGame;
 
-import magic_touch_game.knn.ImageUtil;
-import magic_touch_game.knn.KNNModel;
-import magic_touch_game.knn.PredictionResult;
+import draw_to_survive.knn.ImageUtil;
+import draw_to_survive.knn.KNNModel;
+import draw_to_survive.knn.PredictionResult;
 
 import java.awt.image.BufferedImage;
 

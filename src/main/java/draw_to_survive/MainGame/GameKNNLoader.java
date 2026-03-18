@@ -1,8 +1,8 @@
-package magic_touch_game.MainGame;
+package draw_to_survive.MainGame;
 
-import magic_touch_game.knn.DataPoint;
-import magic_touch_game.knn.KNNModel;
-import magic_touch_game.knn.VectorDatasetLoader;
+import draw_to_survive.knn.DataPoint;
+import draw_to_survive.knn.KNNModel;
+import draw_to_survive.knn.VectorDatasetLoader;
 
 import java.util.ArrayList;
 
@@ -13,7 +13,7 @@ public class GameKNNLoader {
 
     public static KNNModel buildModel() {
         try {
-            String datasetPath = "src/main/java/magic_touch_game/resources/dataset_vectors.txt";
+            String datasetPath = "src/main/java/draw_to_survive/resources/dataset_vectors.txt";
 
             ArrayList<DataPoint> dataset = VectorDatasetLoader.load(datasetPath);
 
