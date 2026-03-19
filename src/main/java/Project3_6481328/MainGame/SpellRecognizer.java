@@ -1,8 +1,8 @@
-package draw_to_survive.MainGame;
+package Project3_6481328.MainGame;
 
-import draw_to_survive.knn.ImageUtil;
-import draw_to_survive.knn.KNNModel;
-import draw_to_survive.knn.PredictionResult;
+import Project3_6481328.knn.ImageUtil;
+import Project3_6481328.knn.KNNModel;
+import Project3_6481328.knn.PredictionResult;
 
 import java.awt.image.BufferedImage;
 

@@ -1,4 +1,4 @@
-package draw_to_survive.knn;
+package Project3_6481328.knn;
 
 public class PredictionResult {
     private final String label;

@@ -1,4 +1,4 @@
-package draw_to_survive.knn;
+package Project3_6481328.knn;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -8,8 +8,7 @@ public class ImageUtil {
     public static final int TARGET_SIZE = 32;
     private static final int PADDING = 2;
 
-    private ImageUtil() {
-    }
+    private ImageUtil() {}
 
     // =========================
     // DATASET CELL: white shape on black background

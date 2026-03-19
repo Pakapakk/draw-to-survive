@@ -1,4 +1,7 @@
-package draw_to_survive.MainGame;
+package Project3_6481328.MainGame;
+
+import Project3_6481328.utils.PixelFont;
+import Project3_6481328.utils.Settings;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -12,8 +15,8 @@ import java.util.List;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
-    private static final int WIDTH = 980;
-    private static final int HEIGHT = 700;
+    private static final int WIDTH = Settings.GAME_WIDTH;
+    private static final int HEIGHT = Settings.GAME_HEIGHT;
 
     private final Timer timer;
     private long startTime;
@@ -41,30 +44,57 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private boolean up, down, left, right;
 
-    public GamePanel() {
+    private final MagicTouchSurvivalGame parentFrame;
+    private final String playerName;
+
+    public GamePanel(MagicTouchSurvivalGame parentFrame, String playerName, Difficulty selectedDifficulty) {
+        this.parentFrame = parentFrame;
+        this.playerName = playerName;
+
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setFocusable(true);
-        setBackground(new Color(18, 18, 24));
+        setBackground(Settings.BG);
         addKeyListener(this);
 
         loadEnemySprites();
 
         player = new Player(WIDTH / 2.0, HEIGHT / 2.0);
-        difficulty = new DifficultyManager();
+        difficulty = new DifficultyManager(selectedDifficulty);
 
         startTime = System.currentTimeMillis();
         lastUpdateTime = startTime;
         nextRingEventTime = startTime + difficulty.randomRingCooldownMs(random);
 
-        timer = new Timer(16, this);
+        timer = new Timer(Settings.TIMER_DELAY, this);
         timer.start();
     }
 
     private void loadEnemySprites() {
+        BufferedImage sheet = null;
+
         try {
-            BufferedImage sheet = ImageIO.read(Objects.requireNonNull(
-                    getClass().getResource("/enemies.png")
-            ));
+            java.net.URL url = getClass().getResource(Settings.ENEMY_SPRITE_RESOURCE_PRIMARY);
+            if (url != null) {
+                sheet = ImageIO.read(url);
+            }
+
+            if (sheet == null) {
+                url = getClass().getResource(Settings.ENEMY_SPRITE_RESOURCE_FALLBACK);
+                if (url != null) {
+                    sheet = ImageIO.read(url);
+                }
+            }
+
+            if (sheet == null) {
+                java.io.File file = new java.io.File(Settings.ENEMY_SPRITE_FILE_PATH);
+                if (file.exists()) {
+                    sheet = ImageIO.read(file);
+                }
+            }
+
+            if (sheet == null) {
+                throw new RuntimeException("enemies.png not found");
+            }
 
             int cellW = sheet.getWidth() / 2;
             int cellH = sheet.getHeight() / 2;
@@ -74,8 +104,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             enemySprites.put(SymbolType.CIRCLE, sheet.getSubimage(0, cellH, cellW, cellH));
             enemySprites.put(SymbolType.Z, sheet.getSubimage(cellW, cellH, cellW, cellH));
 
+            System.out.println("Loaded enemy sprite sheet successfully.");
+
         } catch (Exception ex) {
-            System.out.println("Could not load /enemies.png, fallback drawing will be used.");
+            System.out.println("Could not load enemy sprite sheet, fallback drawing will be used.");
+            ex.printStackTrace();
         }
     }
 
@@ -211,18 +244,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void startRingEvent(long now) {
-
-        // === Choose ONE symbol for the entire ring ===
         SymbolType ringSymbol = SymbolType.random(random);
 
-        // === Choose center (around player OR center of screen) ===
         double angle = random.nextDouble() * Math.PI * 2;
         double offset = 120 + random.nextDouble() * 120;
 
         double cx = clamp(player.getX() + Math.cos(angle) * offset, 120, WIDTH - 120);
         double cy = clamp(player.getY() + Math.sin(angle) * offset, 120, HEIGHT - 120);
 
-        // === Create warning ===
         activeRingWarning = new RingWarning(
                 cx,
                 cy,
@@ -232,14 +261,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 now + difficulty.getRingWarningMs()
         );
 
-        // Optional UI hint
         statusText = "Incoming Ring: " + ringSymbol.getDisplay();
     }
 
     private void updateRingWarning(long now) {
-
         if (activeRingWarning != null && now >= activeRingWarning.getEndTime()) {
-
             spawnRingEnemies(
                     difficulty.getRingRadius(),
                     activeRingWarning.getSymbolType()
@@ -250,14 +276,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void spawnRingEnemies(double radius, SymbolType symbolType) {
-
         int count = difficulty.getRingCount();
 
         double centerX = player.getX();
         double centerY = player.getY();
 
         for (int i = 0; i < count; i++) {
-
             double angle = i * (Math.PI * 2 / count);
 
             double x = centerX + Math.cos(angle) * radius;
@@ -316,9 +340,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         for (Enemy enemy : enemies) {
             if (distance(player.getX(), player.getY(), enemy.getX(), enemy.getY())
                     <= player.getRadius() + enemy.getRadius() - 4) {
-                gameOver = true;
                 statusText = "Game Over";
-                timer.stop();
+                triggerGameOver();
                 break;
             }
         }
@@ -385,6 +408,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         Graphics2D g2 = (Graphics2D) g.create();
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 
         drawGrid(g2);
         drawRingWarning(g2);
@@ -401,9 +425,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawGrid(Graphics2D g2) {
-        g2.setColor(new Color(35, 35, 45));
-        for (int x = 0; x < WIDTH; x += 40) g2.drawLine(x, 0, x, HEIGHT);
-        for (int y = 0; y < HEIGHT; y += 40) g2.drawLine(0, y, WIDTH, y);
+        g2.setColor(Settings.GRID);
+        for (int x = 0; x < WIDTH; x += Settings.GRID_SIZE) g2.drawLine(x, 0, x, HEIGHT);
+        for (int y = 0; y < HEIGHT; y += Settings.GRID_SIZE) g2.drawLine(0, y, WIDTH, y);
     }
 
     private void drawRingWarning(Graphics2D g2) {
@@ -414,7 +438,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 (double) (activeRingWarning.getEndTime() - activeRingWarning.getStartTime());
 
         int alpha = 80 + (int) (100 * Math.abs(Math.sin(progress * Math.PI * 6)));
-        g2.setColor(new Color(255, 80, 80, Math.min(alpha, 180)));
+        g2.setColor(new Color(
+                Settings.RING_WARNING.getRed(),
+                Settings.RING_WARNING.getGreen(),
+                Settings.RING_WARNING.getBlue(),
+                Math.min(alpha, 180)
+        ));
         g2.setStroke(new BasicStroke(4f));
 
         double r = activeRingWarning.getRadius();
@@ -424,17 +453,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 r * 2,
                 r * 2
         ));
-
-//        g2.setColor(Color.WHITE);
-//        g2.setFont(new Font("Arial", Font.BOLD, 24));
-//
-//        String text = activeRingWarning.getSymbolType().getDisplay();
-//        FontMetrics fm = g2.getFontMetrics();
-//
-//        int tx = (int) activeRingWarning.getCx() - fm.stringWidth(text) / 2;
-//        int ty = (int) activeRingWarning.getCy();
-//
-//        g2.drawString(text, tx, ty);
     }
 
     private void drawBomb(Graphics2D g2) {
@@ -446,12 +464,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int x = (int) activeBomb.getX();
         int y = (int) activeBomb.getY();
 
-        g2.setColor(blink ? new Color(255, 210, 50) : new Color(255, 150, 20));
+        g2.setColor(blink ? Settings.BOMB_A : Settings.BOMB_B);
         g2.fillOval(x - 14, y - 14, 28, 28);
 
         g2.setColor(Color.BLACK);
         g2.drawOval(x - 14, y - 14, 28, 28);
-        g2.setFont(new Font("Arial", Font.BOLD, 14));
+        g2.setFont(PixelFont.get(Settings.FONT_BOMB));
         g2.drawString("B", x - 5, y + 5);
     }
 
@@ -460,10 +478,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int y = (int) player.getY();
         int r = (int) player.getRadius();
 
-        g2.setColor(new Color(235, 235, 245));
+        g2.setColor(Settings.TEXT_PRIMARY);
         g2.fillOval(x - r, y - r, r * 2, r * 2);
 
-        g2.setColor(new Color(80, 80, 100));
+        g2.setColor(Settings.PLAYER_OUTLINE);
         g2.drawOval(x - r, y - r, r * 2, r * 2);
     }
 
@@ -474,7 +492,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawEnemy(Graphics2D g2, Enemy enemy) {
-        int size = 48;
+        int size = Settings.ENEMY_DRAW_SIZE;
         int drawX = (int) enemy.getX() - size / 2;
         int drawY = (int) enemy.getY() - size / 2;
 
@@ -486,7 +504,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2.setColor(enemy.getType().getFallbackColor());
             g2.fillOval(drawX, drawY, size, size);
             g2.setColor(Color.WHITE);
-            g2.setFont(new Font("Arial", Font.BOLD, 24));
+            g2.setFont(PixelFont.get(Settings.FONT_ENEMY_FALLBACK));
             String text = enemy.getType().getShortText();
             FontMetrics fm = g2.getFontMetrics();
             int tx = drawX + (size - fm.stringWidth(text)) / 2;
@@ -496,32 +514,42 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawHUD(Graphics2D g2) {
-        g2.setColor(new Color(0, 0, 0, 150));
-        g2.fillRoundRect(12, 12, 370, 110, 18, 18);
+        g2.setColor(Settings.HUD_BG);
+        g2.fillRoundRect(
+                Settings.HUD_X,
+                Settings.HUD_Y,
+                Settings.HUD_W,
+                Settings.HUD_H,
+                Settings.HUD_ARC,
+                Settings.HUD_ARC
+        );
 
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.BOLD, 18));
-        g2.drawString("Score: " + score, 24, 38);
+        g2.setColor(Settings.TEXT_PRIMARY);
 
         double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
-        g2.drawString(String.format("Time: %.1fs", elapsed), 24, 62);
-        g2.drawString("Prediction: " + lastPrediction, 24, 86);
 
-        g2.setFont(new Font("Arial", Font.PLAIN, 15));
-        g2.drawString(statusText, 24, 108);
+        g2.setFont(PixelFont.get(Settings.FONT_HUD));
+        g2.drawString("Player: " + playerName, 24, 38);
+        g2.drawString("Difficulty: " + difficulty.getDifficulty(), 24, 62);
+        g2.drawString("Score: " + score, 24, 86);
+        g2.drawString(String.format("Time: %.1fs", elapsed), 220, 38);
+        g2.drawString("Prediction: " + lastPrediction, 220, 62);
+
+        g2.setFont(PixelFont.get(Settings.FONT_STATUS));
+        g2.drawString(statusText, 24, 112);
     }
 
     private void drawGameOver(Graphics2D g2) {
-        g2.setColor(new Color(0, 0, 0, 180));
+        g2.setColor(Settings.OVERLAY_BG);
         g2.fillRect(0, 0, WIDTH, HEIGHT);
 
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.BOLD, 42));
+        g2.setColor(Settings.TEXT_PRIMARY);
+        g2.setFont(PixelFont.get(Settings.FONT_GAME_OVER));
         String t1 = "GAME OVER";
         int w1 = g2.getFontMetrics().stringWidth(t1);
         g2.drawString(t1, (WIDTH - w1) / 2, HEIGHT / 2 - 20);
 
-        g2.setFont(new Font("Arial", Font.PLAIN, 22));
+        g2.setFont(PixelFont.get(Settings.FONT_FINAL_SCORE));
         String t2 = "Final Score: " + score;
         int w2 = g2.getFontMetrics().stringWidth(t2);
         g2.drawString(t2, (WIDTH - w2) / 2, HEIGHT / 2 + 20);
@@ -558,5 +586,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private double clamp(double v, double min, double max) {
         return Math.max(min, Math.min(max, v));
+    }
+
+    private void triggerGameOver() {
+        if (gameOver) return;
+        gameOver = true;
+        timer.stop();
+        parentFrame.endGame(score);
     }
 }

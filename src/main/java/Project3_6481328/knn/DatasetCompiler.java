@@ -1,4 +1,4 @@
-package draw_to_survive.knn;
+package Project3_6481328.knn;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -10,9 +10,9 @@ public class DatasetCompiler {
 
     public static void main(String[] args) {
         try {
-            String inputPath = "src/main/java/draw_to_survive/dataset/symbol_dataset.png";
-            String vectorOutputPath = "src/main/java/draw_to_survive/resources/dataset_vectors.txt";
-//            String slicedOutputBase = "src/main/java/draw_to_survive/dataset/sliced";
+            String inputPath = "src/main/java/Project3_6481328/dataset/symbol_dataset.png";
+            String vectorOutputPath = "src/main/java/Project3_6481328/resources/dataset_vectors.txt";
+//            String slicedOutputBase = "src/main/java/Project3_6481328/dataset/sliced";
 
             BufferedImage img = ImageIO.read(new File(inputPath));
 

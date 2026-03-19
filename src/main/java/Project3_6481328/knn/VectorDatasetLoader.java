@@ -1,4 +1,4 @@
-package draw_to_survive.knn;
+package Project3_6481328.knn;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -6,8 +6,7 @@ import java.util.ArrayList;
 
 public class VectorDatasetLoader {
 
-    private VectorDatasetLoader() {
-    }
+    private VectorDatasetLoader() {}
 
     public static ArrayList<DataPoint> load(String path) {
         ArrayList<DataPoint> dataset = new ArrayList<>();

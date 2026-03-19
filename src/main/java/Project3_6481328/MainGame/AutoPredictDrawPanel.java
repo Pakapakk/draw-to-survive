@@ -1,6 +1,6 @@
-package draw_to_survive.MainGame;
+package Project3_6481328.MainGame;
 
-import draw_to_survive.knn.PredictionResult;
+import Project3_6481328.knn.PredictionResult;
 
 import javax.swing.*;
 import java.awt.*;
