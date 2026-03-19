@@ -42,11 +42,11 @@ public class ScoreboardFrame extends JFrame {
         header.setBackground(bg);
         header.setBorder(new EmptyBorder(20, 25, 10, 25));
 
-        JLabel title = new JLabel("ARCANE SCOREBOARD");
+        JLabel title = new JLabel("SCOREBOARD");
         title.setForeground(text);
         title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
 
-        JLabel subtitle = new JLabel("Top hunters ranked by survival score");
+        JLabel subtitle = new JLabel("Top ranks by survival score");
         subtitle.setForeground(subText);
         subtitle.setFont(PixelFont.get(Settings.FONT_SMALL));
 
@@ -58,11 +58,6 @@ public class ScoreboardFrame extends JFrame {
         box.add(subtitle);
 
         header.add(box, BorderLayout.WEST);
-
-        JLabel icon = new JLabel("✦");
-        icon.setForeground(Settings.SCORE_COLOR);
-        icon.setFont(new Font("Serif", Font.BOLD, 40));
-        header.add(icon, BorderLayout.EAST);
 
         return header;
     }

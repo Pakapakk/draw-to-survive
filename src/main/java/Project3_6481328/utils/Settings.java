@@ -16,9 +16,9 @@ public final class Settings {
     // =========================
     // Asset / File Paths
     // =========================
-    public static final String ENEMY_SPRITE_RESOURCE_PRIMARY = "/Project3_6481328/dataset/enemies.png";
+    public static final String ENEMY_SPRITE_RESOURCE_PRIMARY = "/Project3_6481328/resources/game_assets/enemies.png";
     public static final String ENEMY_SPRITE_RESOURCE_FALLBACK = "/dataset/enemies.png";
-    public static final String ENEMY_SPRITE_FILE_PATH = "src/main/java/Project3_6481328/dataset/enemies.png";
+    public static final String ENEMY_SPRITE_FILE_PATH = "src/main/java/Project3_6481328/resources/game_assets/enemies.png";
 
     public static final String DATASET_VECTORS_PATH = "src/main/java/Project3_6481328/dataset/dataset_vectors.txt";
     public static final String SCORE_FILE_PATH = "src/main/java/Project3_6481328/scores.txt";
