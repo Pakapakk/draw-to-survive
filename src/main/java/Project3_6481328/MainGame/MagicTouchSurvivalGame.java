@@ -89,9 +89,9 @@ public class MagicTouchSurvivalGame extends JFrame {
         });
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() ->
-                new MagicTouchSurvivalGame("Player", Difficulty.NORMAL)
-        );
-    }
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() ->
+//                new MagicTouchSurvivalGame("Player", Difficulty.NORMAL)
+//        );
+//    }
 }

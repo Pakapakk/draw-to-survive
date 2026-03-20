@@ -47,6 +47,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final MagicTouchSurvivalGame parentFrame;
     private final String playerName;
 
+    private ImageIcon bombGif;
+    private ImageIcon explosionGif;
+
+    private final List<ExplosionEffect> explosions = new ArrayList<>();
+
     public GamePanel(MagicTouchSurvivalGame parentFrame, String playerName, Difficulty selectedDifficulty) {
         this.parentFrame = parentFrame;
         this.playerName = playerName;
@@ -57,6 +62,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
 
         loadEnemySprites();
+
+        bombGif = new ImageIcon(Settings.BOMB_PATH);
+        if (bombGif.getIconWidth() <= 0 || bombGif.getIconHeight() <= 0) {
+            System.out.println("Failed to load bomb gif from: " + Settings.BOMB_PATH);
+            bombGif = null;
+        } else {
+            System.out.println("Bomb gif loaded: " + Settings.BOMB_PATH);
+        }
+
+        explosionGif = new ImageIcon(Settings.EXPLOSION_PATH);
+        if (explosionGif.getIconWidth() <= 0 || explosionGif.getIconHeight() <= 0) {
+            System.out.println("Failed to load explosion gif from: " + Settings.EXPLOSION_PATH);
+            explosionGif = null;
+        } else {
+            System.out.println("Explosion gif loaded: " + Settings.EXPLOSION_PATH);
+        }
 
         player = new Player(WIDTH / 2.0, HEIGHT / 2.0);
         difficulty = new DifficultyManager(selectedDifficulty);
@@ -176,6 +197,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             double d = distance(player.getX(), player.getY(), activeBomb.getX(), activeBomb.getY());
             if (d <= player.getRadius() + activeBomb.getRadius()) {
                 killClosestEnemies(5);
+
+                killClosestEnemies(5);
+
                 activeBomb = null;
                 statusText = "BOOM! 5 closest symbols destroyed";
             }
@@ -382,7 +406,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         int removed = 0;
         for (int i = 0; i < Math.min(limit, matches.size()); i++) {
-            enemies.remove(matches.get(i));
+            Enemy enemy = matches.get(i);
+            addExplosion(enemy.getX(), enemy.getY());
+            enemies.remove(enemy);
             removed++;
         }
 
@@ -396,7 +422,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         int removed = Math.min(count, enemies.size());
         for (int i = 0; i < removed; i++) {
-            enemies.remove(0);
+            Enemy enemy = enemies.remove(0);
+            addExplosion(enemy.getX(), enemy.getY());
         }
 
         score += removed * 8;
@@ -413,6 +440,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         drawGrid(g2);
         drawRingWarning(g2);
         drawBomb(g2);
+        drawExplosion(g2);
         drawPlayer(g2);
         drawEnemies(g2);
         drawHUD(g2);
@@ -458,19 +486,63 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void drawBomb(Graphics2D g2) {
         if (activeBomb == null) return;
 
-        long now = System.currentTimeMillis();
-        boolean blink = ((now / 180) % 2 == 0);
-
         int x = (int) activeBomb.getX();
         int y = (int) activeBomb.getY();
 
-        g2.setColor(blink ? Settings.BOMB_A : Settings.BOMB_B);
-        g2.fillOval(x - 14, y - 14, 28, 28);
+        int size = Settings.BOMB_SIZE;
 
-        g2.setColor(Color.BLACK);
-        g2.drawOval(x - 14, y - 14, 28, 28);
-        g2.setFont(PixelFont.get(Settings.FONT_BOMB));
-        g2.drawString("B", x - 5, y + 5);
+        if (bombGif != null && bombGif.getIconWidth() > 0) {
+            g2.drawImage(
+                    bombGif.getImage(),
+                    x - size / 2,
+                    y - size / 2,
+                    size,
+                    size,
+                    this
+            );
+        } else {
+            long now = System.currentTimeMillis();
+            boolean blink = ((now / 180) % 2 == 0);
+
+            g2.setColor(blink ? Settings.BOMB_A : Settings.BOMB_B);
+            g2.fillOval(x - 14, y - 14, 28, 28);
+
+            g2.setColor(Color.BLACK);
+            g2.drawOval(x - 14, y - 14, 28, 28);
+            g2.setFont(PixelFont.get(Settings.FONT_BOMB));
+            g2.drawString("B", x - 5, y + 5);
+        }
+
+        System.out.println("Bomb drawn at: " + x + ", " + y);
+    }
+
+    private void drawExplosion(Graphics2D g2) {
+        if (explosions.isEmpty()) return;
+
+        long now = System.currentTimeMillis();
+        Iterator<ExplosionEffect> it = explosions.iterator();
+
+        while (it.hasNext()) {
+            ExplosionEffect explosion = it.next();
+
+            if (now - explosion.startTime > Settings.EXPLOSION_DURATION_MS) {
+                it.remove();
+                continue;
+            }
+
+            int size = Settings.EXPLOSION_SIZE;
+
+            if (explosionGif != null && explosionGif.getIconWidth() > 0) {
+                g2.drawImage(
+                        explosionGif.getImage(),
+                        (int) explosion.x - size / 2,
+                        (int) explosion.y - size / 2,
+                        size,
+                        size,
+                        this
+                );
+            }
+        }
     }
 
     private void drawPlayer(Graphics2D g2) {
@@ -555,6 +627,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString(t2, (WIDTH - w2) / 2, HEIGHT / 2 + 20);
     }
 
+
+
     @Override
     public void keyTyped(KeyEvent e) {}
 
@@ -594,4 +668,23 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         timer.stop();
         parentFrame.endGame(score);
     }
+
+    private static class ExplosionEffect {
+        double x;
+        double y;
+        long startTime;
+
+        ExplosionEffect(double x, double y, long startTime) {
+            this.x = x;
+            this.y = y;
+            this.startTime = startTime;
+        }
+    }
+
+    private void addExplosion(double x, double y) {
+        explosions.add(new ExplosionEffect(x, y, System.currentTimeMillis()));
+    }
 }
+
+
+

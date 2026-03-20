@@ -167,7 +167,7 @@ public class WelcomeFrame extends JFrame {
         panel.add(scoreBtn);
         panel.add(Box.createHorizontalStrut(24));
 
-        JLabel creditLabel = new JLabel("PAKAPAK JUNGJAROEN 6481328");
+        JLabel creditLabel = new JLabel("PAKAPAK TANADOL JIMIN STEVEN");
         creditLabel.setForeground(text);
         creditLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
         panel.add(creditLabel);

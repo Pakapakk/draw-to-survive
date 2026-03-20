@@ -16,13 +16,16 @@ public final class Settings {
     // =========================
     // Asset / File Paths
     // =========================
+    public static final String PATH = "src/main/java/Project3_6481328/";
     public static final String ENEMY_SPRITE_RESOURCE_PRIMARY = "/Project3_6481328/resources/game_assets/enemies.png";
     public static final String ENEMY_SPRITE_RESOURCE_FALLBACK = "/dataset/enemies.png";
-    public static final String ENEMY_SPRITE_FILE_PATH = "src/main/java/Project3_6481328/resources/game_assets/enemies.png";
+    public static final String ENEMY_SPRITE_FILE_PATH = PATH + "resources/game_assets/enemies.png";
 
-    public static final String DATASET_VECTORS_PATH = "src/main/java/Project3_6481328/dataset/dataset_vectors.txt";
-    public static final String SCORE_FILE_PATH = "src/main/java/Project3_6481328/scores.txt";
-    public static final String FONT_PATH = "src/main/java/Project3_6481328/resources/fonts/VT323-Regular.ttf";
+    public static final String DATASET_VECTORS_PATH = PATH + "dataset/dataset_vectors.txt";
+    public static final String SCORE_FILE_PATH = PATH + "scores.txt";
+    public static final String FONT_PATH = PATH + "resources/fonts/VT323-Regular.ttf";
+    public static final String BOMB_PATH = PATH + "resources/game_assets/bomb.gif";
+    public static final String EXPLOSION_PATH = PATH + "resources/game_assets/explosions.gif";
 
     // =========================
     // Colors
@@ -97,6 +100,11 @@ public final class Settings {
 
     public static final int TEXTFIELD_HEIGHT = 44;
     public static final int COMBOBOX_HEIGHT = 44;
+
+    public static final int BOMB_SIZE = 40;
+
+    public static final int EXPLOSION_SIZE = 48;
+    public static final int EXPLOSION_DURATION_MS = 600;
 
     // =========================
     // KNN
