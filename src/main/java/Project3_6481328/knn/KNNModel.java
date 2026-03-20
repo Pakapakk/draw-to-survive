@@ -120,7 +120,6 @@ public class KNNModel {
             double dx = x - size / 2.0;
             double dy = y - size / 2.0;
 
-            // 🔥 center-weighted Gaussian
             double weight = 1.0 + 1.5 * Math.exp(-(dx * dx + dy * dy) / 100.0);
 
             sum += weight * d * d;
