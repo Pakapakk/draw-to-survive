@@ -30,7 +30,9 @@ public class MagicTouchSurvivalGame extends JFrame {
                 "<html><div style='padding:8px'>" +
                         "<b>Controls</b><br>" +
                         "Move: WASD / Arrow Keys<br>" +
-                        "Draw on the canvas to cast spell<br><br>" +
+                        "Draw on the canvas to cast spell<br>" +
+                        "Q: Freeze all enemies (1s / 10s CD)<br><br>" +
+                        "ESC: Pause game<br><br>" +
                         "<b>Bomb</b><br>" +
                         "Walk onto it to kill 5 closest enemies<br><br>" +
                         "<b>Difficulty</b><br>" +

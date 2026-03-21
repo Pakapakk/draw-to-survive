@@ -44,6 +44,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private boolean up, down, left, right;
 
+    private static final long FREEZE_DURATION_MS = 1000;
+    private static final long FREEZE_COOLDOWN_MS = 10000;
+    private boolean frozen = false;
+    private long freezeEndTime = 0;
+    private long freezeCooldownEndTime = 0;
+
+    private boolean paused = false;
+    private boolean countingDown = false;
+    private int countdownValue = 3;
+    private Timer countdownTimer;
+    private long pauseStartTime = 0;
+    private long totalPausedMs = 0;
+    private Rectangle resumeButtonRect;
+    private Rectangle quitButtonRect;
+
     private final MagicTouchSurvivalGame parentFrame;
     private final String playerName;
 
@@ -60,6 +75,20 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         setFocusable(true);
         setBackground(Settings.BG);
         addKeyListener(this);
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (!paused || countingDown) return;
+                Point p = e.getPoint();
+                if (resumeButtonRect != null && resumeButtonRect.contains(p)) {
+                    startCountdown();
+                } else if (quitButtonRect != null && quitButtonRect.contains(p)) {
+                    paused = false;
+                    triggerGameOver();
+                }
+            }
+        });
 
         loadEnemySprites();
 
@@ -140,6 +169,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             return;
         }
 
+        if (paused) {
+            repaint();
+            return;
+        }
+
         long now = System.currentTimeMillis();
         double dt = (now - lastUpdateTime) / 1000.0;
         lastUpdateTime = now;
@@ -147,6 +181,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         difficulty.update(now - startTime);
 
         updatePlayer(dt);
+        updateFreeze(now);
         updateBomb(now);
         updateSpawns(now);
         updateRingWarning(now);
@@ -154,6 +189,67 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         checkPlayerCollisions();
 
         repaint();
+    }
+
+    private long effectiveNow() {
+        return paused ? pauseStartTime : System.currentTimeMillis();
+    }
+
+    private void activatePause() {
+        if (gameOver || countingDown) return;
+        paused = true;
+        pauseStartTime = System.currentTimeMillis();
+        repaint();
+    }
+
+    private void startCountdown() {
+        countingDown = true;
+        countdownValue = 3;
+        repaint();
+
+        countdownTimer = new Timer(1000, null);
+        countdownTimer.addActionListener(e -> {
+            countdownValue--;
+            if (countdownValue <= 0) {
+                countdownTimer.stop();
+                paused = false;
+                countingDown = false;
+
+                long pausedMs = System.currentTimeMillis() - pauseStartTime;
+                totalPausedMs += pausedMs;
+                freezeEndTime += pausedMs;
+                freezeCooldownEndTime += pausedMs;
+
+                if (activeBomb != null) {
+                    activeBomb = new BombPickup(
+                            activeBomb.getX(),
+                            activeBomb.getY(),
+                            activeBomb.getExpireAt() + pausedMs
+                    );
+                }
+
+                // Resync lastUpdateTime so dt doesn't spike after resume
+                lastUpdateTime = System.currentTimeMillis();
+            }
+            repaint();
+        });
+        countdownTimer.start();
+    }
+
+    private void activateFreeze() {
+        long now = System.currentTimeMillis();
+        if (now < freezeCooldownEndTime) return;
+
+        frozen = true;
+        freezeEndTime = now + FREEZE_DURATION_MS;
+        freezeCooldownEndTime = now + FREEZE_COOLDOWN_MS;
+        statusText = "FREEZE! All enemies frozen!";
+    }
+
+    private void updateFreeze(long now) {
+        if (frozen && now >= freezeEndTime) {
+            frozen = false;
+        }
     }
 
     private void updatePlayer(double dt) {
@@ -197,9 +293,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             double d = distance(player.getX(), player.getY(), activeBomb.getX(), activeBomb.getY());
             if (d <= player.getRadius() + activeBomb.getRadius()) {
                 killClosestEnemies(5);
-
-                killClosestEnemies(5);
-
                 activeBomb = null;
                 statusText = "BOOM! 5 closest symbols destroyed";
             }
@@ -331,14 +424,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         while (it.hasNext()) {
             Enemy enemy = it.next();
 
-            if (enemy.getMode() == EnemyMode.CHASE_PLAYER) {
-                moveToward(enemy, player.getX(), player.getY(), enemy.getSpeed(), dt);
-            } else {
-                moveToward(enemy, enemy.getTargetX(), enemy.getTargetY(), enemy.getSpeed(), dt);
+            if (!frozen) {
+                if (enemy.getMode() == EnemyMode.CHASE_PLAYER) {
+                    moveToward(enemy, player.getX(), player.getY(), enemy.getSpeed(), dt);
+                } else {
+                    moveToward(enemy, enemy.getTargetX(), enemy.getTargetY(), enemy.getSpeed(), dt);
 
-                if (distance(enemy.getX(), enemy.getY(), enemy.getTargetX(), enemy.getTargetY()) < 10) {
-                    it.remove();
-                    continue;
+                    if (distance(enemy.getX(), enemy.getY(), enemy.getTargetX(), enemy.getTargetY()) < 10) {
+                        it.remove();
+                        continue;
+                    }
                 }
             }
 
@@ -444,9 +539,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         drawPlayer(g2);
         drawEnemies(g2);
         drawHUD(g2);
+        drawFreezeHUD(g2);
 
         if (gameOver) {
             drawGameOver(g2);
+        }
+
+        if (paused) {
+            drawPauseOverlay(g2);
         }
 
         g2.dispose();
@@ -513,7 +613,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2.drawString("B", x - 5, y + 5);
         }
 
-        System.out.println("Bomb drawn at: " + x + ", " + y);
+        //System.out.println("Bomb drawn at: " + x + ", " + y);
     }
 
     private void drawExplosion(Graphics2D g2) {
@@ -598,7 +698,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         g2.setColor(Settings.TEXT_PRIMARY);
 
-        double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
+        double elapsed = (effectiveNow() - startTime - totalPausedMs) / 1000.0;
 
         g2.setFont(PixelFont.get(Settings.FONT_HUD));
         g2.drawString("Player: " + playerName, 24, 38);
@@ -609,6 +709,154 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         g2.setFont(PixelFont.get(Settings.FONT_STATUS));
         g2.drawString(statusText, 24, 112);
+    }
+
+    private void drawFreezeHUD(Graphics2D g2) {
+        long now = effectiveNow();
+
+        int boxX = Settings.HUD_X;
+        int boxY = Settings.HUD_Y + Settings.HUD_H + 8;
+        int boxW = 200;
+        int boxH = 52;
+        int arc  = Settings.HUD_ARC;
+
+        // Background box
+        g2.setColor(Settings.HUD_BG);
+        g2.fillRoundRect(boxX, boxY, boxW, boxH, arc, arc);
+
+        // Label
+        g2.setFont(PixelFont.get(Settings.FONT_STATUS));
+
+        if (frozen) {
+            // Pulsing cyan while active
+            float pulse = (float)(0.6 + 0.4 * Math.abs(Math.sin(now / 150.0)));
+            g2.setColor(new Color(0, (int)(200 * pulse), (int)(255 * pulse)));
+            g2.drawString("Q  FREEZE  ACTIVE", boxX + 10, boxY + 20);
+
+            // Active duration bar
+            double progress = 1.0 - (double)(freezeEndTime - now) / FREEZE_DURATION_MS;
+            progress = Math.min(1.0, Math.max(0.0, progress));
+            int barW = boxW - 20;
+
+            g2.setColor(new Color(30, 30, 60));
+            g2.fillRoundRect(boxX + 10, boxY + 28, barW, 14, 6, 6);
+
+            g2.setColor(new Color(0, 200, 255));
+            g2.fillRoundRect(boxX + 10, boxY + 28, (int)(barW * (1.0 - progress)), 14, 6, 6);
+
+        } else if (now < freezeCooldownEndTime) {
+            // On cooldown
+            double remaining = (freezeCooldownEndTime - now) / 1000.0;
+            g2.setColor(new Color(160, 160, 180));
+            g2.drawString(String.format("Q  FREEZE  %.1fs", remaining), boxX + 10, boxY + 20);
+
+            // Cooldown bar (fills up as cooldown expires)
+            double progress = 1.0 - (double)(freezeCooldownEndTime - now) / FREEZE_COOLDOWN_MS;
+            progress = Math.min(1.0, Math.max(0.0, progress));
+            int barW = boxW - 20;
+
+            g2.setColor(new Color(30, 30, 60));
+            g2.fillRoundRect(boxX + 10, boxY + 28, barW, 14, 6, 6);
+
+            g2.setColor(new Color(80, 100, 160));
+            g2.fillRoundRect(boxX + 10, boxY + 28, (int)(barW * progress), 14, 6, 6);
+
+        } else {
+            // Ready
+            g2.setColor(new Color(100, 220, 255));
+            g2.drawString("Q  FREEZE  READY", boxX + 10, boxY + 20);
+
+            int barW = boxW - 20;
+            g2.setColor(new Color(0, 200, 255));
+            g2.fillRoundRect(boxX + 10, boxY + 28, barW, 14, 6, 6);
+        }
+    }
+
+    private void drawPauseOverlay(Graphics2D g2) {
+        // Dim the background
+        g2.setColor(new Color(0, 0, 0, 160));
+        g2.fillRect(0, 0, WIDTH, HEIGHT);
+
+        int cx = WIDTH / 2;
+        int cy = HEIGHT / 2;
+
+        if (countingDown) {
+            // --- Countdown screen ---
+            g2.setFont(PixelFont.get(120f));
+            String num = String.valueOf(countdownValue);
+            FontMetrics fm = g2.getFontMetrics();
+            int tw = fm.stringWidth(num);
+
+            // Glowing shadow
+            g2.setColor(new Color(100, 180, 255, 80));
+            g2.drawString(num, cx - tw / 2 + 4, cy + fm.getAscent() / 2 + 4);
+
+            g2.setColor(new Color(180, 230, 255));
+            g2.drawString(num, cx - tw / 2, cy + fm.getAscent() / 2);
+
+            g2.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+            String sub = "GET READY";
+            fm = g2.getFontMetrics();
+            g2.setColor(Settings.TEXT_SECONDARY);
+            g2.drawString(sub, cx - fm.stringWidth(sub) / 2, cy + 80);
+
+        } else {
+            // --- Pause menu screen ---
+            // Title
+            g2.setFont(PixelFont.get(Settings.FONT_GAME_OVER));
+            String title = "PAUSED";
+            FontMetrics fm = g2.getFontMetrics();
+            g2.setColor(Settings.TEXT_PRIMARY);
+            g2.drawString(title, cx - fm.stringWidth(title) / 2, cy - 80);
+
+            // Buttons
+            int btnW = 200;
+            int btnH = 52;
+            int gap = 20;
+
+            int resumeX = cx - btnW / 2;
+            int resumeY = cy - btnH / 2 - gap / 2 - btnH / 2;
+
+            int quitX = cx - btnW / 2;
+            int quitY = resumeY + btnH + gap;
+
+            resumeButtonRect = new Rectangle(resumeX, resumeY, btnW, btnH);
+            quitButtonRect   = new Rectangle(quitX,   quitY,   btnW, btnH);
+
+            // Resume button
+            g2.setColor(new Color(60, 160, 100));
+            g2.fillRoundRect(resumeX, resumeY, btnW, btnH, 14, 14);
+            g2.setColor(new Color(100, 220, 140));
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawRoundRect(resumeX, resumeY, btnW, btnH, 14, 14);
+
+            g2.setFont(PixelFont.get(Settings.FONT_LABEL));
+            fm = g2.getFontMetrics();
+            String resumeText = "RESUME";
+            g2.setColor(Color.WHITE);
+            g2.drawString(resumeText,
+                    resumeX + (btnW - fm.stringWidth(resumeText)) / 2,
+                    resumeY + (btnH - fm.getHeight()) / 2 + fm.getAscent());
+
+            // Quit button
+            g2.setColor(new Color(160, 50, 50));
+            g2.fillRoundRect(quitX, quitY, btnW, btnH, 14, 14);
+            g2.setColor(new Color(220, 100, 100));
+            g2.drawRoundRect(quitX, quitY, btnW, btnH, 14, 14);
+
+            String quitText = "QUIT & SAVE";
+            g2.setColor(Color.WHITE);
+            g2.drawString(quitText,
+                    quitX + (btnW - fm.stringWidth(quitText)) / 2,
+                    quitY + (btnH - fm.getHeight()) / 2 + fm.getAscent());
+
+            // Hint
+            g2.setFont(PixelFont.get(Settings.FONT_TINY));
+            g2.setColor(Settings.TEXT_SECONDARY);
+            String hint = "ESC to resume";
+            fm = g2.getFontMetrics();
+            g2.drawString(hint, cx - fm.stringWidth(hint) / 2, quitY + btnH + 30);
+        }
     }
 
     private void drawGameOver(Graphics2D g2) {
@@ -639,6 +887,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             case KeyEvent.VK_S, KeyEvent.VK_DOWN -> down = true;
             case KeyEvent.VK_A, KeyEvent.VK_LEFT -> left = true;
             case KeyEvent.VK_D, KeyEvent.VK_RIGHT -> right = true;
+            case KeyEvent.VK_Q -> activateFreeze();
+            case KeyEvent.VK_ESCAPE -> {
+                if (!gameOver) {
+                    if (paused && !countingDown) {
+                        startCountdown(); // ESC also resumes
+                    } else if (!paused) {
+                        activatePause();
+                    }
+                }
+            }
         }
     }
 
