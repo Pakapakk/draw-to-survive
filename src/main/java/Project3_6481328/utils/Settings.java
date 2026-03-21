@@ -26,6 +26,7 @@ public final class Settings {
     public static final String FONT_PATH = PATH + "resources/fonts/VT323-Regular.ttf";
     public static final String BOMB_PATH = PATH + "resources/game_assets/bomb.gif";
     public static final String EXPLOSION_PATH = PATH + "resources/game_assets/explosions.gif";
+    public static final String HEART_PATH = PATH + "resources/game_assets/heart.png";
 
     // =========================
     // Colors
@@ -104,6 +105,10 @@ public final class Settings {
     public static final int COMBOBOX_HEIGHT = 44;
 
     public static final int BOMB_SIZE = 40;
+
+    public static final int PLAYER_MAX_HEALTH = 3;
+    public static final int HEART_SIZE = 28;
+    public static final long IFRAMES_DURATION_MS = 1500;
 
     public static final int EXPLOSION_SIZE = 48;
     public static final int EXPLOSION_DURATION_MS = 600;

@@ -14,8 +14,8 @@ public class MagicTouchSurvivalGame extends JFrame {
     private final String playerName;
 
     public MagicTouchSurvivalGame(String playerName, Difficulty selectedDifficulty) {
-        super("Magic Touch Survival");
-
+        //super("Magic Touch Survival");
+        super("Draw To Survive");
         this.playerName = playerName;
         this.selectedDifficulty = selectedDifficulty;
 

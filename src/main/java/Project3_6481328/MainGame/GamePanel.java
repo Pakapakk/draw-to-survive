@@ -64,6 +64,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private ImageIcon bombGif;
     private ImageIcon explosionGif;
+    private BufferedImage heartImage;
 
     private final List<ExplosionEffect> explosions = new ArrayList<>();
 
@@ -106,6 +107,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             explosionGif = null;
         } else {
             System.out.println("Explosion gif loaded: " + Settings.EXPLOSION_PATH);
+        }
+
+        try {
+            java.net.URL heartUrl = getClass().getResource("/Project3_6481328/resources/game_assets/heart.png");
+            if (heartUrl != null) {
+                heartImage = ImageIO.read(heartUrl);
+            } else {
+                heartImage = ImageIO.read(new java.io.File(Settings.HEART_PATH));
+            }
+            System.out.println("Heart image loaded.");
+        } catch (Exception e) {
+            System.out.println("Failed to load heart image: " + e.getMessage());
+            heartImage = null;
         }
 
         player = new Player(WIDTH / 2.0, HEIGHT / 2.0);
@@ -456,11 +470,27 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void checkPlayerCollisions() {
-        for (Enemy enemy : enemies) {
+        long now = System.currentTimeMillis();
+        if (player.isInvincible(now)) return;
+
+        Iterator<Enemy> it = enemies.iterator();
+        while (it.hasNext()) {
+            Enemy enemy = it.next();
             if (distance(player.getX(), player.getY(), enemy.getX(), enemy.getY())
                     <= player.getRadius() + enemy.getRadius() - 4) {
-                statusText = "Game Over";
-                triggerGameOver();
+
+                player.setHealth(player.getHealth() - 1);
+                player.setInvincibleUntil(now + Settings.IFRAMES_DURATION_MS);
+
+                addExplosion(enemy.getX(), enemy.getY());
+                it.remove();
+
+                if (player.getHealth() <= 0) {
+                    statusText = "Game Over";
+                    triggerGameOver();
+                } else {
+                    statusText = "Ouch! " + player.getHealth() + " heart(s) left!";
+                }
                 break;
             }
         }
@@ -539,6 +569,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         drawPlayer(g2);
         drawEnemies(g2);
         drawHUD(g2);
+        drawHearts(g2);
         drawFreezeHUD(g2);
 
         if (gameOver) {
@@ -650,10 +681,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int y = (int) player.getY();
         int r = (int) player.getRadius();
 
-        g2.setColor(Settings.TEXT_PRIMARY);
-        g2.fillOval(x - r, y - r, r * 2, r * 2);
+        long now = System.currentTimeMillis();
+        boolean invincible = player.isInvincible(now);
 
-        g2.setColor(Settings.PLAYER_OUTLINE);
+        if (invincible) {
+            // Flash between normal and red every 120ms
+            boolean flashOn = ((now / 120) % 2 == 0);
+            g2.setColor(flashOn ? new Color(255, 80, 80) : new Color(200, 60, 60, 160));
+        } else {
+            g2.setColor(Settings.TEXT_PRIMARY);
+        }
+
+        g2.fillOval(x - r, y - r, r * 2, r * 2);
+        g2.setColor(invincible ? new Color(255, 120, 120) : Settings.PLAYER_OUTLINE);
         g2.drawOval(x - r, y - r, r * 2, r * 2);
     }
 
@@ -709,6 +749,51 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         g2.setFont(PixelFont.get(Settings.FONT_STATUS));
         g2.drawString(statusText, 24, 112);
+    }
+
+    private void drawHearts(Graphics2D g2) {
+        int size  = Settings.HEART_SIZE;
+        int gap   = 6;
+        int total = Settings.PLAYER_MAX_HEALTH;
+
+        // Position hearts in the top-right corner of the HUD box
+        int startX = Settings.HUD_X + Settings.HUD_W - total * (size + gap) + gap - 4;
+        int y      = Settings.HUD_Y + (Settings.HUD_H - size) / 2;
+
+        long now = System.currentTimeMillis();
+        boolean invincible = player.isInvincible(now);
+
+        for (int i = 0; i < total; i++) {
+            int x = startX + i * (size + gap);
+            boolean filled = i < player.getHealth();
+
+            if (heartImage != null) {
+                if (filled) {
+                    // Pulse the last heart a bit when invincible
+                    if (invincible && i == player.getHealth() - 1) {
+                        float pulse = (float)(0.75 + 0.25 * Math.abs(Math.sin(now / 100.0)));
+                        int ps = (int)(size * pulse);
+                        int offset = (size - ps) / 2;
+                        g2.drawImage(heartImage, x + offset, y + offset, ps, ps, null);
+                    } else {
+                        g2.drawImage(heartImage, x, y, size, size, null);
+                    }
+                } else {
+                    // Empty heart: draw greyed-out version
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
+                    g2.drawImage(heartImage, x, y, size, size, null);
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+                }
+            } else {
+                // Fallback: draw colored heart shape via polygon
+                g2.setColor(filled ? new Color(220, 50, 50) : new Color(80, 40, 40));
+                g2.fillOval(x,          y + size / 4, size / 2, size / 2);
+                g2.fillOval(x + size/2, y + size / 4, size / 2, size / 2);
+                int[] px = {x, x + size / 2, x + size};
+                int[] py = {y + size / 2, y + size, y + size / 2};
+                g2.fillPolygon(px, py, 3);
+            }
+        }
     }
 
     private void drawFreezeHUD(Graphics2D g2) {
@@ -943,6 +1028,3 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         explosions.add(new ExplosionEffect(x, y, System.currentTimeMillis()));
     }
 }
-
-
-
