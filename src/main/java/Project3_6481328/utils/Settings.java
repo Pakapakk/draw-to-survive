@@ -49,6 +49,8 @@ public final class Settings {
     public static final Color EASY_COLOR = new Color(120, 220, 120);
     public static final Color NORMAL_COLOR = new Color(180, 180, 200);
     public static final Color HARD_COLOR = new Color(255, 120, 120);
+    public static final Color BRUTAL_COLOR = new Color(255, 80, 30);
+    public static final Color IMPOSSIBLE_COLOR = new Color(220, 0, 0);
 
     public static final Color RANK_COLOR = new Color(255, 220, 120);
     public static final Color SELECTED_ROW = new Color(70, 55, 130);

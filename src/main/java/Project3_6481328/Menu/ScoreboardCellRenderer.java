@@ -59,6 +59,8 @@ public class ScoreboardCellRenderer extends JPanel implements ListCellRenderer<S
         switch (value.getDifficulty()) {
             case "Easy" -> diffColor = Settings.EASY_COLOR;
             case "Hard" -> diffColor = Settings.HARD_COLOR;
+            case "Brutal" -> diffColor = Settings.BRUTAL_COLOR;
+            case "Impossible" -> diffColor = Settings.IMPOSSIBLE_COLOR;
             default -> diffColor = Settings.NORMAL_COLOR;
         }
 

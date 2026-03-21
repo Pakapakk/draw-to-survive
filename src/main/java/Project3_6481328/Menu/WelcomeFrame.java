@@ -90,7 +90,7 @@ public class WelcomeFrame extends JFrame {
         panel.add(Box.createVerticalStrut(28));
 
         panel.add(label("DIFFICULTY"));
-        difficultyBox = new JComboBox<>(new String[]{"Easy", "Normal", "Hard"});
+        difficultyBox = new JComboBox<>(new String[]{"Easy", "Normal", "Hard", "Brutal", "Impossible"});
         styleComboBox(difficultyBox);
         difficultyBox.addActionListener(e -> updateDifficultyInfo());
 
@@ -114,10 +114,8 @@ public class WelcomeFrame extends JFrame {
         instructionArea = new JTextArea(
                 "HOW TO PLAY:\n\n" +
                         "- MOVE USING WASD OR ARROW KEYS\n\n" +
-                        "- ESC TO PAUSE THE GAME\n\n" +
                         "- DRAW THE CORRECT SYMBOL TO DESTROY MATCHING ENEMIES\n\n" +
                         "- PICK UP BOMBS TO DESTROY THE 5 CLOSEST ENEMIES\n\n" +
-                        "- PRESSING Q WILL FREEZE ALL ENEMIES (1s / 10s CD)\n\n" +
                         "- WATCH OUT FOR RING ATTACKS\n\n" +
                         "- SURVIVE AS LONG AS POSSIBLE AND GET A HIGH SCORE"
         );
@@ -186,6 +184,12 @@ public class WelcomeFrame extends JFrame {
         } else if ("Hard".equals(selected)) {
             difficultyInfoLabel.setText("FAST ENEMIES • LESS HELP • HIGH INTENSITY");
             difficultyInfoLabel.setForeground(Settings.HARD_COLOR);
+        } else if ("Brutal".equals(selected)) {
+            difficultyInfoLabel.setText("RELENTLESS • RARE BOMBS • VERY FAST");
+            difficultyInfoLabel.setForeground(Settings.BRUTAL_COLOR);
+        } else if ("Impossible".equals(selected)) {
+            difficultyInfoLabel.setText("OVERWHELMING • GOOD LUCK");
+            difficultyInfoLabel.setForeground(Settings.IMPOSSIBLE_COLOR);
         } else {
             difficultyInfoLabel.setText("BALANCED • RECOMMENDED");
             difficultyInfoLabel.setForeground(Settings.NORMAL_COLOR);
@@ -199,6 +203,10 @@ public class WelcomeFrame extends JFrame {
             return Difficulty.EASY;
         } else if ("Hard".equalsIgnoreCase(selected)) {
             return Difficulty.HARD;
+        } else if ("Brutal".equalsIgnoreCase(selected)) {
+            return Difficulty.BRUTAL;
+        } else if ("Impossible".equalsIgnoreCase(selected)) {
+            return Difficulty.IMPOSSIBLE;
         } else {
             return Difficulty.NORMAL;
         }
