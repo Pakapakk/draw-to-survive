@@ -114,7 +114,9 @@ public class WelcomeFrame extends JFrame {
         instructionArea = new JTextArea(
                 "HOW TO PLAY:\n\n" +
                         "- MOVE USING WASD OR ARROW KEYS\n\n" +
+                        "- ESC TO PAUSE THE GAME\n\n" +
                         "- DRAW THE CORRECT SYMBOL TO DESTROY MATCHING ENEMIES\n\n" +
+                        "- PRESS Q TO FREEZE ALL ENEMIES (1s / 10s CD)\n\n" +
                         "- PICK UP BOMBS TO DESTROY THE 5 CLOSEST ENEMIES\n\n" +
                         "- WATCH OUT FOR RING ATTACKS\n\n" +
                         "- SURVIVE AS LONG AS POSSIBLE AND GET A HIGH SCORE"
