@@ -138,7 +138,7 @@ public class WelcomeFrame extends JFrame {
         title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
         panel.add(title, BorderLayout.NORTH);
 
-        JPanel grid = new JPanel(new GridLayout(0, 3, 8, 8));
+        JPanel grid = new JPanel(new GridLayout(0, 2, 8, 8));
         grid.setBackground(panelBg);
 
         skinButtons.clear();

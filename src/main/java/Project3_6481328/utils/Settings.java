@@ -35,7 +35,7 @@ public final class Settings {
     public static final String DEFAULT_PLAYER_SKIN = "white";
 
     public static final String[] AVAILABLE_PLAYER_SKINS = {
-            "white", "brown", "denim", "green", "grey", "pink", "purple"
+            "white", "brown", "green", "grey", "pink", "purple"
     };
 
     public static String getPlayerSkinFolder(String skinName) {

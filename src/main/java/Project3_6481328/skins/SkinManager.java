@@ -7,7 +7,6 @@ public class SkinManager {
     private static final List<PlayerSkin> SKINS = List.of(
             new PlayerSkin("White", "white"),
             new PlayerSkin("Brown", "brown"),
-            new PlayerSkin("Denim", "denim"),
             new PlayerSkin("Green", "green"),
             new PlayerSkin("Grey", "grey"),
             new PlayerSkin("Pink", "pink"),

@@ -30,7 +30,7 @@ public class SkinSelectorDialog extends JDialog {
         title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
         main.add(title, BorderLayout.NORTH);
 
-        JPanel grid = new JPanel(new GridLayout(0, 3, 12, 12));
+        JPanel grid = new JPanel(new GridLayout(0, 2, 12, 12));
         grid.setBackground(Settings.BG);
 
         for (String skin : Settings.AVAILABLE_PLAYER_SKINS) {
