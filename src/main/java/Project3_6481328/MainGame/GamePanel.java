@@ -59,18 +59,27 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Rectangle resumeButtonRect;
     private Rectangle quitButtonRect;
 
-    private final MagicTouchSurvivalGame parentFrame;
+    private final DinoDrawSurvivalGame parentFrame;
     private final String playerName;
+    private final String selectedSkin;
 
     private ImageIcon bombGif;
     private ImageIcon explosionGif;
     private BufferedImage heartImage;
 
+    private ImageIcon playerIdleGif;
+    private ImageIcon playerMoveGif;
+    private ImageIcon playerHurtGif;
+    private ImageIcon playerDeadGif;
+
     private final List<ExplosionEffect> explosions = new ArrayList<>();
 
-    public GamePanel(MagicTouchSurvivalGame parentFrame, String playerName, Difficulty selectedDifficulty) {
+    public GamePanel(DinoDrawSurvivalGame parentFrame, String playerName, Difficulty selectedDifficulty, String selectedSkin) {
         this.parentFrame = parentFrame;
         this.playerName = playerName;
+        this.selectedSkin = (selectedSkin == null || selectedSkin.isBlank())
+                ? Settings.DEFAULT_PLAYER_SKIN
+                : selectedSkin;
 
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setFocusable(true);
@@ -122,6 +131,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             heartImage = null;
         }
 
+        loadPlayerSkin();
+
         player = new Player(WIDTH / 2.0, HEIGHT / 2.0);
         difficulty = new DifficultyManager(selectedDifficulty);
 
@@ -131,6 +142,37 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         timer = new Timer(Settings.TIMER_DELAY, this);
         timer.start();
+    }
+
+    private void loadPlayerSkin() {
+        playerIdleGif = loadGif(Settings.getPlayerIdlePath(selectedSkin), "idle");
+        playerMoveGif = loadGif(Settings.getPlayerMovePath(selectedSkin), "move");
+        playerHurtGif = loadGif(Settings.getPlayerHurtPath(selectedSkin), "hurt");
+        playerDeadGif = loadGif(Settings.getPlayerDeadPath(selectedSkin), "dead");
+
+        if (playerIdleGif == null) {
+            playerIdleGif = loadGif(Settings.getPlayerIdlePath(Settings.DEFAULT_PLAYER_SKIN), "idle fallback");
+        }
+        if (playerMoveGif == null) {
+            playerMoveGif = loadGif(Settings.getPlayerMovePath(Settings.DEFAULT_PLAYER_SKIN), "move fallback");
+        }
+        if (playerHurtGif == null) {
+            playerHurtGif = loadGif(Settings.getPlayerHurtPath(Settings.DEFAULT_PLAYER_SKIN), "hurt fallback");
+        }
+        if (playerDeadGif == null) {
+            playerDeadGif = loadGif(Settings.getPlayerDeadPath(Settings.DEFAULT_PLAYER_SKIN), "dead fallback");
+        }
+    }
+
+    private ImageIcon loadGif(String path, String label) {
+        ImageIcon icon = new ImageIcon(path);
+        if (icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0) {
+            System.out.println("Failed to load player " + label + " gif from: " + path);
+            return null;
+        } else {
+            System.out.println("Loaded player " + label + " gif: " + path);
+            return icon;
+        }
     }
 
     private void loadEnemySprites() {
@@ -242,7 +284,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     );
                 }
 
-                // Resync lastUpdateTime so dt doesn't spike after resume
                 lastUpdateTime = System.currentTimeMillis();
             }
             repaint();
@@ -643,8 +684,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2.setFont(PixelFont.get(Settings.FONT_BOMB));
             g2.drawString("B", x - 5, y + 5);
         }
-
-        //System.out.println("Bomb drawn at: " + x + ", " + y);
     }
 
     private void drawExplosion(Graphics2D g2) {
@@ -679,22 +718,57 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void drawPlayer(Graphics2D g2) {
         int x = (int) player.getX();
         int y = (int) player.getY();
-        int r = (int) player.getRadius();
 
         long now = System.currentTimeMillis();
         boolean invincible = player.isInvincible(now);
+        boolean moving = up || down || left || right;
+        boolean dead = player.getHealth() <= 0;
 
-        if (invincible) {
-            // Flash between normal and red every 120ms
-            boolean flashOn = ((now / 120) % 2 == 0);
-            g2.setColor(flashOn ? new Color(255, 80, 80) : new Color(200, 60, 60, 160));
+        ImageIcon currentGif;
+        if (dead) {
+            currentGif = playerDeadGif;
+        } else if (invincible) {
+            currentGif = playerHurtGif != null ? playerHurtGif : playerIdleGif;
+        } else if (moving) {
+            currentGif = playerMoveGif != null ? playerMoveGif : playerIdleGif;
         } else {
-            g2.setColor(Settings.TEXT_PRIMARY);
+            currentGif = playerIdleGif;
         }
 
-        g2.fillOval(x - r, y - r, r * 2, r * 2);
-        g2.setColor(invincible ? new Color(255, 120, 120) : Settings.PLAYER_OUTLINE);
-        g2.drawOval(x - r, y - r, r * 2, r * 2);
+        int size = Settings.PLAYER_DRAW_SIZE;
+
+        if (currentGif != null && currentGif.getIconWidth() > 0) {
+            if (invincible) {
+                boolean flashOn = ((now / 120) % 2 == 0);
+                if (!flashOn) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
+                }
+            }
+
+            g2.drawImage(
+                    currentGif.getImage(),
+                    x - size / 2,
+                    y - size / 2,
+                    size,
+                    size,
+                    this
+            );
+
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        } else {
+            int r = (int) player.getRadius();
+
+            if (invincible) {
+                boolean flashOn = ((now / 120) % 2 == 0);
+                g2.setColor(flashOn ? new Color(255, 80, 80) : new Color(200, 60, 60, 160));
+            } else {
+                g2.setColor(Settings.TEXT_PRIMARY);
+            }
+
+            g2.fillOval(x - r, y - r, r * 2, r * 2);
+            g2.setColor(invincible ? new Color(255, 120, 120) : Settings.PLAYER_OUTLINE);
+            g2.drawOval(x - r, y - r, r * 2, r * 2);
+        }
     }
 
     private void drawEnemies(Graphics2D g2) {
@@ -745,7 +819,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString("Difficulty: " + difficulty.getDifficulty(), 24, 62);
         g2.drawString("Score: " + score, 24, 86);
         g2.drawString(String.format("Time: %.1fs", elapsed), 220, 38);
-        g2.drawString("Prediction: " + lastPrediction, 220, 62);
+//        g2.drawString("Prediction: " + lastPrediction, 220, 62);
 
         g2.setFont(PixelFont.get(Settings.FONT_STATUS));
         g2.drawString(statusText, 24, 112);
@@ -756,7 +830,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int gap   = 6;
         int total = Settings.PLAYER_MAX_HEALTH;
 
-        // Position hearts in the top-right corner of the HUD box
         int startX = Settings.HUD_X + Settings.HUD_W - total * (size + gap) + gap - 4;
         int y      = Settings.HUD_Y + (Settings.HUD_H - size) / 2;
 
@@ -769,7 +842,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
             if (heartImage != null) {
                 if (filled) {
-                    // Pulse the last heart a bit when invincible
                     if (invincible && i == player.getHealth() - 1) {
                         float pulse = (float)(0.75 + 0.25 * Math.abs(Math.sin(now / 100.0)));
                         int ps = (int)(size * pulse);
@@ -779,13 +851,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         g2.drawImage(heartImage, x, y, size, size, null);
                     }
                 } else {
-                    // Empty heart: draw greyed-out version
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
                     g2.drawImage(heartImage, x, y, size, size, null);
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
                 }
             } else {
-                // Fallback: draw colored heart shape via polygon
                 g2.setColor(filled ? new Color(220, 50, 50) : new Color(80, 40, 40));
                 g2.fillOval(x,          y + size / 4, size / 2, size / 2);
                 g2.fillOval(x + size/2, y + size / 4, size / 2, size / 2);
@@ -805,20 +875,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int boxH = 52;
         int arc  = Settings.HUD_ARC;
 
-        // Background box
         g2.setColor(Settings.HUD_BG);
         g2.fillRoundRect(boxX, boxY, boxW, boxH, arc, arc);
 
-        // Label
         g2.setFont(PixelFont.get(Settings.FONT_STATUS));
 
         if (frozen) {
-            // Pulsing cyan while active
             float pulse = (float)(0.6 + 0.4 * Math.abs(Math.sin(now / 150.0)));
             g2.setColor(new Color(0, (int)(200 * pulse), (int)(255 * pulse)));
             g2.drawString("Q  FREEZE  ACTIVE", boxX + 10, boxY + 20);
 
-            // Active duration bar
             double progress = 1.0 - (double)(freezeEndTime - now) / FREEZE_DURATION_MS;
             progress = Math.min(1.0, Math.max(0.0, progress));
             int barW = boxW - 20;
@@ -830,12 +896,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2.fillRoundRect(boxX + 10, boxY + 28, (int)(barW * (1.0 - progress)), 14, 6, 6);
 
         } else if (now < freezeCooldownEndTime) {
-            // On cooldown
             double remaining = (freezeCooldownEndTime - now) / 1000.0;
             g2.setColor(new Color(160, 160, 180));
             g2.drawString(String.format("Q  FREEZE  %.1fs", remaining), boxX + 10, boxY + 20);
 
-            // Cooldown bar (fills up as cooldown expires)
             double progress = 1.0 - (double)(freezeCooldownEndTime - now) / FREEZE_COOLDOWN_MS;
             progress = Math.min(1.0, Math.max(0.0, progress));
             int barW = boxW - 20;
@@ -847,7 +911,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2.fillRoundRect(boxX + 10, boxY + 28, (int)(barW * progress), 14, 6, 6);
 
         } else {
-            // Ready
             g2.setColor(new Color(100, 220, 255));
             g2.drawString("Q  FREEZE  READY", boxX + 10, boxY + 20);
 
@@ -858,7 +921,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawPauseOverlay(Graphics2D g2) {
-        // Dim the background
         g2.setColor(new Color(0, 0, 0, 160));
         g2.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -866,13 +928,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int cy = HEIGHT / 2;
 
         if (countingDown) {
-            // --- Countdown screen ---
             g2.setFont(PixelFont.get(120f));
             String num = String.valueOf(countdownValue);
             FontMetrics fm = g2.getFontMetrics();
             int tw = fm.stringWidth(num);
 
-            // Glowing shadow
             g2.setColor(new Color(100, 180, 255, 80));
             g2.drawString(num, cx - tw / 2 + 4, cy + fm.getAscent() / 2 + 4);
 
@@ -886,15 +946,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2.drawString(sub, cx - fm.stringWidth(sub) / 2, cy + 80);
 
         } else {
-            // --- Pause menu screen ---
-            // Title
             g2.setFont(PixelFont.get(Settings.FONT_GAME_OVER));
             String title = "PAUSED";
             FontMetrics fm = g2.getFontMetrics();
             g2.setColor(Settings.TEXT_PRIMARY);
             g2.drawString(title, cx - fm.stringWidth(title) / 2, cy - 80);
 
-            // Buttons
             int btnW = 200;
             int btnH = 52;
             int gap = 20;
@@ -908,7 +965,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             resumeButtonRect = new Rectangle(resumeX, resumeY, btnW, btnH);
             quitButtonRect   = new Rectangle(quitX,   quitY,   btnW, btnH);
 
-            // Resume button
             g2.setColor(new Color(60, 160, 100));
             g2.fillRoundRect(resumeX, resumeY, btnW, btnH, 14, 14);
             g2.setColor(new Color(100, 220, 140));
@@ -923,7 +979,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     resumeX + (btnW - fm.stringWidth(resumeText)) / 2,
                     resumeY + (btnH - fm.getHeight()) / 2 + fm.getAscent());
 
-            // Quit button
             g2.setColor(new Color(160, 50, 50));
             g2.fillRoundRect(quitX, quitY, btnW, btnH, 14, 14);
             g2.setColor(new Color(220, 100, 100));
@@ -935,7 +990,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     quitX + (btnW - fm.stringWidth(quitText)) / 2,
                     quitY + (btnH - fm.getHeight()) / 2 + fm.getAscent());
 
-            // Hint
             g2.setFont(PixelFont.get(Settings.FONT_TINY));
             g2.setColor(Settings.TEXT_SECONDARY);
             String hint = "ESC to resume";
@@ -960,8 +1014,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString(t2, (WIDTH - w2) / 2, HEIGHT / 2 + 20);
     }
 
-
-
     @Override
     public void keyTyped(KeyEvent e) {}
 
@@ -976,7 +1028,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             case KeyEvent.VK_ESCAPE -> {
                 if (!gameOver) {
                     if (paused && !countingDown) {
-                        startCountdown(); // ESC also resumes
+                        startCountdown();
                     } else if (!paused) {
                         activatePause();
                     }

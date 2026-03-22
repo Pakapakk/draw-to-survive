@@ -1,22 +1,27 @@
 package Project3_6481328.Menu;
 
 import Project3_6481328.MainGame.Difficulty;
-import Project3_6481328.MainGame.MagicTouchSurvivalGame;
+import Project3_6481328.MainGame.DinoDrawSurvivalGame;
 import Project3_6481328.utils.PixelFont;
 import Project3_6481328.utils.Settings;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class WelcomeFrame extends JFrame {
 
     private JTextField nameField;
-    private JTextArea instructionArea;
     private JComboBox<String> difficultyBox;
     private JLabel difficultyInfoLabel;
+
+    private String selectedSkin = Settings.DEFAULT_PLAYER_SKIN;
+
+    private final Map<String, JButton> skinButtons = new LinkedHashMap<>();
+    private JLabel selectedSkinLabel;
 
     private final Color bg = Settings.BG;
     private final Color panelBg = Settings.PANEL_BG;
@@ -61,7 +66,7 @@ public class WelcomeFrame extends JFrame {
         panel.setBorder(new EmptyBorder(20, 24, 20, 24));
 
         panel.add(buildLeft());
-        panel.add(buildRight());
+        panel.add(buildRightSkinPanel());
 
         return panel;
     }
@@ -73,20 +78,8 @@ public class WelcomeFrame extends JFrame {
         panel.add(label("PLAYER NAME"));
         nameField = new JTextField(15);
         styleTextField(nameField);
-
-        nameField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                String name = nameField.getText().trim();
-                if (name.isEmpty()) {
-                    setTitle("Draw To Survive");
-                } else {
-                    setTitle("Draw To Survive - " + name);
-                }
-            }
-        });
-
         panel.add(nameField);
+
         panel.add(Box.createVerticalStrut(28));
 
         panel.add(label("DIFFICULTY"));
@@ -104,38 +97,186 @@ public class WelcomeFrame extends JFrame {
 
         updateDifficultyInfo();
 
+        panel.add(Box.createVerticalStrut(28));
+
+        panel.add(label("CURRENT SKIN"));
+        selectedSkinLabel = new JLabel(selectedSkin.toUpperCase());
+        selectedSkinLabel.setForeground(Settings.ACCENT);
+        selectedSkinLabel.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+        selectedSkinLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectedSkinLabel.setBorder(new EmptyBorder(6, 2, 0, 0));
+        panel.add(selectedSkinLabel);
+
+        panel.add(Box.createVerticalStrut(28));
+
+//        JLabel hint = new JLabel("CHOOSE A SKIN FROM THE RIGHT PANEL");
+//        hint.setForeground(Settings.TEXT_SECONDARY);
+//        hint.setFont(PixelFont.get(Settings.FONT_SMALL));
+//        hint.setAlignmentX(Component.LEFT_ALIGNMENT);
+//        panel.add(hint);
+
+        panel.add(Box.createVerticalGlue());
+
+        JButton instructionsBtn = new JButton("GAME INSTRUCTIONS");
+        styleButton(instructionsBtn);
+        instructionsBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        instructionsBtn.addActionListener(e -> showInstructionsPopup());
+        panel.add(instructionsBtn);
+
         return panel;
     }
 
-    private JPanel buildRight() {
+    private JPanel buildRightSkinPanel() {
         JPanel panel = createCard();
-        panel.setLayout(new BorderLayout());
+        panel.setLayout(new BorderLayout(0, 16));
 
-        instructionArea = new JTextArea(
-                "HOW TO PLAY:\n\n" +
-                        "- MOVE USING WASD OR ARROW KEYS\n\n" +
-                        "- ESC TO PAUSE THE GAME\n\n" +
-                        "- DRAW THE CORRECT SYMBOL TO DESTROY MATCHING ENEMIES\n\n" +
-                        "- PRESS Q TO FREEZE ALL ENEMIES (1s / 10s CD)\n\n" +
-                        "- PICK UP BOMBS TO DESTROY THE 5 CLOSEST ENEMIES\n\n" +
-                        "- WATCH OUT FOR RING ATTACKS\n\n" +
-                        "- SURVIVE AS LONG AS POSSIBLE AND GET A HIGH SCORE"
-        );
-        instructionArea.setEditable(false);
-        instructionArea.setLineWrap(true);
-        instructionArea.setWrapStyleWord(true);
-        instructionArea.setBackground(panelBg);
-        instructionArea.setForeground(text);
-        instructionArea.setFont(PixelFont.get(Settings.FONT_INPUT));
-        instructionArea.setBorder(new EmptyBorder(12, 12, 12, 12));
+        JLabel title = new JLabel("SELECT PLAYER SKIN", SwingConstants.CENTER);
+        title.setForeground(text);
+        title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+        panel.add(title, BorderLayout.NORTH);
 
-        JScrollPane scrollPane = new JScrollPane(instructionArea);
+        JPanel grid = new JPanel(new GridLayout(0, 3, 12, 12));
+        grid.setBackground(panelBg);
+
+        skinButtons.clear();
+        for (String skin : Settings.AVAILABLE_PLAYER_SKINS) {
+            JButton skinButton = createSkinCardButton(skin);
+            skinButtons.put(skin, skinButton);
+            grid.add(skinButton);
+        }
+
+        refreshSkinSelectionUI();
+
+        JScrollPane scrollPane = new JScrollPane(grid);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setBackground(panelBg);
+        scrollPane.setBackground(panelBg);
 
         panel.add(scrollPane, BorderLayout.CENTER);
 
+        JLabel footer = new JLabel("CLICK A SKIN TO APPLY IT IMMEDIATELY", SwingConstants.CENTER);
+        footer.setForeground(Settings.TEXT_SECONDARY);
+        footer.setFont(PixelFont.get(Settings.FONT_SMALL));
+        panel.add(footer, BorderLayout.SOUTH);
+
         return panel;
+    }
+
+    private JButton createSkinCardButton(String skinName) {
+        JButton button = new JButton();
+        button.setLayout(new BorderLayout());
+        button.setFocusPainted(false);
+        button.setBackground(inputBg);
+
+        String previewPath = Settings.getPlayerIdlePath(skinName);
+        ImageIcon preview = null;
+
+        File file = new File(previewPath);
+        if (file.exists()) {
+            preview = new ImageIcon(previewPath);
+        }
+
+        JLabel imageLabel = new JLabel("", SwingConstants.CENTER);
+        imageLabel.setOpaque(false);
+
+        if (preview != null && preview.getIconWidth() > 0) {
+            Image scaled = preview.getImage().getScaledInstance(48, 48, Image.SCALE_DEFAULT);
+            imageLabel.setIcon(new ImageIcon(scaled));
+        } else {
+            imageLabel.setText("NO PREVIEW");
+            imageLabel.setForeground(Settings.TEXT_SECONDARY);
+            imageLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
+        }
+
+        JLabel nameLabel = new JLabel(capitalize(skinName), SwingConstants.CENTER);
+        nameLabel.setForeground(text);
+        nameLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
+
+        JPanel content = new JPanel(new BorderLayout(0, 8));
+        content.setOpaque(false);
+        content.setBorder(new EmptyBorder(10, 10, 10, 10));
+        content.add(imageLabel, BorderLayout.CENTER);
+        content.add(nameLabel, BorderLayout.SOUTH);
+
+        button.add(content, BorderLayout.CENTER);
+
+        button.addActionListener(e -> {
+            selectedSkin = skinName;
+            selectedSkinLabel.setText(selectedSkin.toUpperCase());
+            refreshSkinSelectionUI();
+        });
+
+        return button;
+    }
+
+    private void refreshSkinSelectionUI() {
+        for (Map.Entry<String, JButton> entry : skinButtons.entrySet()) {
+            String skin = entry.getKey();
+            JButton button = entry.getValue();
+
+            if (skin.equalsIgnoreCase(selectedSkin)) {
+                button.setBorder(BorderFactory.createLineBorder(Settings.ACCENT, 3));
+                button.setBackground(new Color(40, 32, 68));
+            } else {
+                button.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
+                button.setBackground(inputBg);
+            }
+        }
+    }
+
+    private void showInstructionsPopup() {
+        JDialog dialog = new JDialog(this, "Game Instructions", true);
+        dialog.setSize(560, 430);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        JPanel main = new JPanel(new BorderLayout(12, 12));
+        main.setBackground(Settings.BG);
+        main.setBorder(new EmptyBorder(18, 18, 18, 18));
+        dialog.setContentPane(main);
+
+        JLabel title = new JLabel("HOW TO PLAY", SwingConstants.CENTER);
+        title.setForeground(Settings.TEXT_PRIMARY);
+        title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+        main.add(title, BorderLayout.NORTH);
+
+        JTextArea area = new JTextArea(
+                "CONTROLS:\n\n" +
+                        "- MOVE USING WASD OR ARROW KEYS\n" +
+                        "- PRESS ESC TO PAUSE / RESUME\n" +
+                        "- PRESS Q TO FREEZE ALL ENEMIES FOR 1 SECOND\n\n" +
+                        "GAMEPLAY:\n\n" +
+                        "- DRAW THE CORRECT SYMBOL TO DESTROY MATCHING ENEMIES\n" +
+                        "- PICK UP BOMBS TO DESTROY THE 5 CLOSEST ENEMIES\n" +
+                        "- WATCH OUT FOR RING ATTACKS\n" +
+                        "- SURVIVE AS LONG AS POSSIBLE\n" +
+                        "- GET THE HIGHEST SCORE YOU CAN"
+        );
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBackground(Settings.PANEL_BG);
+        area.setForeground(Settings.TEXT_PRIMARY);
+        area.setFont(PixelFont.get(Settings.FONT_INPUT));
+        area.setBorder(new EmptyBorder(14, 14, 14, 14));
+
+        JScrollPane scrollPane = new JScrollPane(area);
+        scrollPane.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
+        scrollPane.getViewport().setBackground(Settings.PANEL_BG);
+
+        main.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel();
+        bottom.setBackground(Settings.BG);
+
+        JButton closeBtn = new JButton("CLOSE");
+        styleButton(closeBtn);
+        closeBtn.addActionListener(e -> dialog.dispose());
+
+        bottom.add(closeBtn);
+        main.add(bottom, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
     }
 
     private JPanel buildBottom() {
@@ -158,7 +299,7 @@ public class WelcomeFrame extends JFrame {
             }
 
             Difficulty selectedDifficulty = getSelectedDifficulty();
-            new MagicTouchSurvivalGame(name, selectedDifficulty);
+            new DinoDrawSurvivalGame(name, selectedDifficulty, selectedSkin);
             dispose();
         });
 
@@ -257,5 +398,10 @@ public class WelcomeFrame extends JFrame {
         button.setFocusPainted(false);
         button.setFont(PixelFont.get(Settings.FONT_INPUT));
         button.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 }

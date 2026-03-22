@@ -29,6 +29,36 @@ public final class Settings {
     public static final String HEART_PATH = PATH + "resources/game_assets/heart.png";
 
     // =========================
+    // Player Skins
+    // =========================
+    public static final String PLAYER_SKINS_BASE_PATH = PATH + "resources/game_assets/player_skins/";
+    public static final String DEFAULT_PLAYER_SKIN = "white";
+
+    public static final String[] AVAILABLE_PLAYER_SKINS = {
+            "white", "brown", "denim", "green", "grey", "pink", "purple"
+    };
+
+    public static String getPlayerSkinFolder(String skinName) {
+        return PLAYER_SKINS_BASE_PATH + skinName + "/";
+    }
+
+    public static String getPlayerIdlePath(String skinName) {
+        return getPlayerSkinFolder(skinName) + "idle.gif";
+    }
+
+    public static String getPlayerMovePath(String skinName) {
+        return getPlayerSkinFolder(skinName) + "move.gif";
+    }
+
+    public static String getPlayerHurtPath(String skinName) {
+        return getPlayerSkinFolder(skinName) + "hurt.gif";
+    }
+
+    public static String getPlayerDeadPath(String skinName) {
+        return getPlayerSkinFolder(skinName) + "dead.gif";
+    }
+
+    // =========================
     // Colors
     // =========================
     public static final Color BG = new Color(16, 18, 28);
@@ -71,20 +101,20 @@ public final class Settings {
     // =========================
     // Font Sizes
     // =========================
-    public static final float FONT_TITLE_BIG = 42f;
-    public static final float FONT_TITLE_MEDIUM = 26f;
-    public static final float FONT_LABEL = 18f;
-    public static final float FONT_INPUT = 16f;
-    public static final float FONT_SMALL = 14f;
-    public static final float FONT_TINY = 12f;
+    public static final float FONT_TITLE_BIG = 44f;
+    public static final float FONT_TITLE_MEDIUM = 28f;
+    public static final float FONT_LABEL = 20f;
+    public static final float FONT_INPUT = 18f;
+    public static final float FONT_SMALL = 16f;
+    public static final float FONT_TINY = 14f;
 
-    public static final float FONT_BOMB = 14f;
-    public static final float FONT_ENEMY_FALLBACK = 24f;
-    public static final float FONT_HUD = 18f;
-    public static final float FONT_STATUS = 15f;
-    public static final float FONT_GAME_OVER = 42f;
-    public static final float FONT_FINAL_SCORE = 22f;
-    public static final float FONT_SCORE_BIG = 20f;
+    public static final float FONT_BOMB = 16f;
+    public static final float FONT_ENEMY_FALLBACK = 26f;
+    public static final float FONT_HUD = 20f;
+    public static final float FONT_STATUS = 17f;
+    public static final float FONT_GAME_OVER = 44f;
+    public static final float FONT_FINAL_SCORE = 24f;
+    public static final float FONT_SCORE_BIG = 22f;
 
     // =========================
     // Layout / Sizes
@@ -94,6 +124,7 @@ public final class Settings {
 
     public static final int GRID_SIZE = 40;
     public static final int ENEMY_DRAW_SIZE = 48;
+    public static final int PLAYER_DRAW_SIZE = 56;
 
     public static final int HUD_X = 12;
     public static final int HUD_Y = 12;
