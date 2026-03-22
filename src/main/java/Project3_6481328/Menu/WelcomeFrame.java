@@ -8,9 +8,11 @@ import Project3_6481328.utils.Settings;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.File;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.io.*;
 
 public class WelcomeFrame extends JFrame {
 
@@ -48,15 +50,24 @@ public class WelcomeFrame extends JFrame {
     }
 
     private JPanel buildHeader() {
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(bg);
-        panel.setBorder(new EmptyBorder(30, 0, 10, 0));
+        panel.setBorder(new EmptyBorder(24, 24, 10, 24));
 
         JLabel title = new JLabel("DRAW TO SURVIVE");
         title.setFont(PixelFont.get(Settings.FONT_TITLE_BIG));
         title.setForeground(text);
 
-        panel.add(title);
+        JButton exitBtn = new JButton("EXIT GAME");
+        styleInteractiveButton(exitBtn);
+        exitBtn.addActionListener(e -> {
+            dispose();
+            System.exit(0);
+        });
+
+        panel.add(title, BorderLayout.WEST);
+        panel.add(exitBtn, BorderLayout.EAST);
+
         return panel;
     }
 
@@ -107,18 +118,10 @@ public class WelcomeFrame extends JFrame {
         selectedSkinLabel.setBorder(new EmptyBorder(6, 2, 0, 0));
         panel.add(selectedSkinLabel);
 
-        panel.add(Box.createVerticalStrut(28));
-
-//        JLabel hint = new JLabel("CHOOSE A SKIN FROM THE RIGHT PANEL");
-//        hint.setForeground(Settings.TEXT_SECONDARY);
-//        hint.setFont(PixelFont.get(Settings.FONT_SMALL));
-//        hint.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        panel.add(hint);
-
         panel.add(Box.createVerticalGlue());
 
         JButton instructionsBtn = new JButton("GAME INSTRUCTIONS");
-        styleButton(instructionsBtn);
+        styleInteractiveButton(instructionsBtn);
         instructionsBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         instructionsBtn.addActionListener(e -> showInstructionsPopup());
         panel.add(instructionsBtn);
@@ -135,7 +138,7 @@ public class WelcomeFrame extends JFrame {
         title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
         panel.add(title, BorderLayout.NORTH);
 
-        JPanel grid = new JPanel(new GridLayout(0, 3, 12, 12));
+        JPanel grid = new JPanel(new GridLayout(0, 3, 8, 8));
         grid.setBackground(panelBg);
 
         skinButtons.clear();
@@ -163,47 +166,57 @@ public class WelcomeFrame extends JFrame {
     }
 
     private JButton createSkinCardButton(String skinName) {
-        JButton button = new JButton();
-        button.setLayout(new BorderLayout());
+        JButton button = new JButton(capitalize(skinName));
         button.setFocusPainted(false);
         button.setBackground(inputBg);
+        button.setForeground(text);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+
+        button.setHorizontalTextPosition(SwingConstants.CENTER);
+        button.setVerticalTextPosition(SwingConstants.BOTTOM);
+        button.setIconTextGap(6);
+        button.setFont(PixelFont.get(Settings.FONT_SMALL));
+        button.setPreferredSize(new Dimension(125, 105));
 
         String previewPath = Settings.getPlayerIdlePath(skinName);
-        ImageIcon preview = null;
 
-        File file = new File(previewPath);
-        if (file.exists()) {
-            preview = new ImageIcon(previewPath);
-        }
+        ImageIcon staticPreview = loadStaticSkinPreview(previewPath, 42, 42);
+        ImageIcon animatedPreview = loadAnimatedSkinPreview(previewPath, 42, 42);
 
-        JLabel imageLabel = new JLabel("", SwingConstants.CENTER);
-        imageLabel.setOpaque(false);
-
-        if (preview != null && preview.getIconWidth() > 0) {
-            Image scaled = preview.getImage().getScaledInstance(48, 48, Image.SCALE_DEFAULT);
-            imageLabel.setIcon(new ImageIcon(scaled));
+        if (staticPreview != null) {
+            button.setIcon(staticPreview);
         } else {
-            imageLabel.setText("NO PREVIEW");
-            imageLabel.setForeground(Settings.TEXT_SECONDARY);
-            imageLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
+            System.out.println("Missing static skin preview: " + previewPath);
         }
-
-        JLabel nameLabel = new JLabel(capitalize(skinName), SwingConstants.CENTER);
-        nameLabel.setForeground(text);
-        nameLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
-
-        JPanel content = new JPanel(new BorderLayout(0, 8));
-        content.setOpaque(false);
-        content.setBorder(new EmptyBorder(10, 10, 10, 10));
-        content.add(imageLabel, BorderLayout.CENTER);
-        content.add(nameLabel, BorderLayout.SOUTH);
-
-        button.add(content, BorderLayout.CENTER);
 
         button.addActionListener(e -> {
             selectedSkin = skinName;
             selectedSkinLabel.setText(selectedSkin.toUpperCase());
             refreshSkinSelectionUI();
+        });
+
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (!skinName.equalsIgnoreCase(selectedSkin)) {
+                    button.setBackground(new Color(34, 40, 58));
+                    button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+                }
+
+                if (animatedPreview != null) {
+                    button.setIcon(animatedPreview);
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (staticPreview != null) {
+                    button.setIcon(staticPreview);
+                }
+                refreshSkinSelectionUI();
+            }
         });
 
         return button;
@@ -270,7 +283,7 @@ public class WelcomeFrame extends JFrame {
         bottom.setBackground(Settings.BG);
 
         JButton closeBtn = new JButton("CLOSE");
-        styleButton(closeBtn);
+        styleInteractiveButton(closeBtn);
         closeBtn.addActionListener(e -> dialog.dispose());
 
         bottom.add(closeBtn);
@@ -287,8 +300,8 @@ public class WelcomeFrame extends JFrame {
         JButton startBtn = new JButton("START GAME");
         JButton scoreBtn = new JButton("SCOREBOARD");
 
-        styleButton(startBtn);
-        styleButton(scoreBtn);
+        styleInteractiveButton(startBtn);
+        styleInteractiveButton(scoreBtn);
 
         startBtn.addActionListener(e -> {
             String name = nameField.getText().trim();
@@ -308,12 +321,6 @@ public class WelcomeFrame extends JFrame {
         panel.add(startBtn);
         panel.add(Box.createHorizontalStrut(14));
         panel.add(scoreBtn);
-        panel.add(Box.createHorizontalStrut(24));
-
-        JLabel creditLabel = new JLabel("PAKAPAK TANADOL JIMIN STEVEN");
-        creditLabel.setForeground(text);
-        creditLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
-        panel.add(creditLabel);
 
         return panel;
     }
@@ -385,23 +392,200 @@ public class WelcomeFrame extends JFrame {
 
     private void styleComboBox(JComboBox<String> comboBox) {
         comboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, Settings.COMBOBOX_HEIGHT));
-        comboBox.setBackground(inputBg);
-        comboBox.setForeground(text);
         comboBox.setFont(PixelFont.get(Settings.FONT_INPUT));
+        comboBox.setForeground(Color.WHITE);
+        comboBox.setBackground(Color.BLACK);
+        comboBox.setOpaque(true);
+        comboBox.setFocusable(false);
+        comboBox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         comboBox.setBorder(BorderFactory.createLineBorder(Settings.INPUT_BORDER, 2));
         comboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        comboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list,
+                    Object value,
+                    int index,
+                    boolean isSelected,
+                    boolean cellHasFocus
+            ) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(
+                        list, value, index, isSelected, cellHasFocus
+                );
+
+                label.setFont(PixelFont.get(Settings.FONT_INPUT));
+                label.setOpaque(true);
+                label.setBorder(new EmptyBorder(6, 10, 6, 10));
+
+                // index == -1 means the closed/selected display
+                if (index == -1) {
+                    label.setBackground(Color.BLACK);
+                    label.setForeground(Color.WHITE);
+                } else if (isSelected) {
+                    label.setBackground(Settings.ACCENT);
+                    label.setForeground(Color.WHITE);
+                } else {
+                    label.setBackground(Settings.INPUT_BG);
+                    label.setForeground(Settings.TEXT_PRIMARY);
+                }
+
+                return label;
+            }
+        });
+
+        comboBox.setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+            @Override
+            protected JButton createArrowButton() {
+                JButton button = new JButton() {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                        int w = getWidth();
+                        int h = getHeight();
+
+                        int size = 6;
+
+                        int[] x = {
+                                w / 2 - size,
+                                w / 2 + size,
+                                w / 2
+                        };
+
+                        int[] y = {
+                                h / 2 - 2,
+                                h / 2 - 2,
+                                h / 2 + size
+                        };
+
+                        g2.setColor(Color.WHITE);
+                        g2.fillPolygon(x, y, 3);
+
+                        g2.dispose();
+                    }
+                };
+
+                button.setBackground(Color.BLACK);
+                button.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Settings.INPUT_BORDER));
+                button.setFocusPainted(false);
+                button.setContentAreaFilled(true);
+                button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+                return button;
+            }
+        });
     }
 
-    private void styleButton(JButton button) {
-        button.setBackground(accent);
+    private void styleInteractiveButton(JButton button) {
+        Color normalBg = accent;
+        Color hoverBg = new Color(
+                Math.min(accent.getRed() + 20, 255),
+                Math.min(accent.getGreen() + 20, 255),
+                Math.min(accent.getBlue() + 20, 255)
+        );
+
+        button.setBackground(normalBg);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setFont(PixelFont.get(Settings.FONT_INPUT));
-        button.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(normalBg, 2),
+                BorderFactory.createEmptyBorder(10, 18, 10, 18)
+        ));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(hoverBg);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(Color.WHITE, 2),
+                        BorderFactory.createEmptyBorder(10, 18, 10, 18)
+                ));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(normalBg);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(normalBg, 2),
+                        BorderFactory.createEmptyBorder(10, 18, 10, 18)
+                ));
+            }
+        });
     }
 
     private String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private ImageIcon loadSkinPreview(String path) {
+        try {
+            File file = new File(path);
+            System.out.println("Trying preview file path: " + path);
+
+            if (!file.exists()) {
+                System.out.println("File does not exist: " + path);
+                return null;
+            }
+
+            Image image = javax.imageio.ImageIO.read(file);
+            if (image == null) {
+                System.out.println("ImageIO could not read: " + path);
+                return null;
+            }
+
+            return new ImageIcon(image);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private ImageIcon loadStaticSkinPreview(String path, int width, int height) {
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                return null;
+            }
+
+            Image image = javax.imageio.ImageIO.read(file);
+            if (image == null) {
+                return null;
+            }
+
+            Image scaled = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaled);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private ImageIcon loadAnimatedSkinPreview(String path, int width, int height) {
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                return null;
+            }
+
+            ImageIcon gifIcon = new ImageIcon(path);
+            if (gifIcon.getIconWidth() <= 0 || gifIcon.getIconHeight() <= 0) {
+                return null;
+            }
+
+            Image scaled = gifIcon.getImage().getScaledInstance(width, height, Image.SCALE_DEFAULT);
+            return new ImageIcon(scaled);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
