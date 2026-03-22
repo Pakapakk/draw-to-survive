@@ -38,4 +38,6 @@ build/
 ### Mac OS ###
 .DS_Store
 
-**/src/main/java/magic_touch_game/dataset/sliced/*
+**/src/main/java/Project3_6481328/dataset/sliced/*
+
+**/src/main/java/Project3_6481328/scores.txt
