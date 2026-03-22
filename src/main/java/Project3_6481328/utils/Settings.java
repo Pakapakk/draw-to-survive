@@ -122,9 +122,9 @@ public final class Settings {
     public static final float FONT_TITLE_BIG = 44f;
     public static final float FONT_TITLE_MEDIUM = 28f;
     public static final float FONT_LABEL = 20f;
-    public static final float FONT_INPUT = 18f;
+    public static final float FONT_INPUT = 20f;
     public static final float FONT_SMALL = 16f;
-    public static final float FONT_TINY = 14f;
+    public static final float FONT_TINY = 16f;
 
     public static final float FONT_BOMB = 16f;
     public static final float FONT_ENEMY_FALLBACK = 26f;
@@ -132,7 +132,7 @@ public final class Settings {
     public static final float FONT_STATUS = 17f;
     public static final float FONT_GAME_OVER = 44f;
     public static final float FONT_FINAL_SCORE = 24f;
-    public static final float FONT_SCORE_BIG = 22f;
+    public static final float FONT_SCORE_BIG = 26f;
 
     // =========================
     // Layout / Sizes

@@ -3,6 +3,7 @@ package Project3_6481328.MainGame;
 import Project3_6481328.Menu.ScoreManager;
 import Project3_6481328.Menu.WelcomeFrame;
 import Project3_6481328.utils.AudioManager;
+import Project3_6481328.utils.PixelFont;
 import Project3_6481328.utils.Settings;
 
 import javax.swing.*;
@@ -37,6 +38,7 @@ public class DinoDrawSurvivalGame extends JFrame {
         rightPanel.setPreferredSize(new Dimension(Settings.RIGHT_PANEL_WIDTH, Settings.GAME_HEIGHT));
         rightPanel.setBackground(Settings.PANEL_BG);
 
+        // ===== GUIDE =====
         JLabel guide = new JLabel(
                 "<html><div style='padding:12px; color:white;'>" +
                         "<b>Controls</b><br>" +
@@ -55,8 +57,29 @@ public class DinoDrawSurvivalGame extends JFrame {
         guide.setForeground(Settings.TEXT_PRIMARY);
         guide.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        rightPanel.add(drawPanel, BorderLayout.NORTH);
-        rightPanel.add(guide, BorderLayout.CENTER);
+        // ===== DRAW SECTION (label + panel together) =====
+        JPanel drawContainer = new JPanel(new BorderLayout());
+        drawContainer.setBackground(Settings.GAME_BG);
+
+        // Label
+        JLabel topLabel = new JLabel("DRAW HERE!!", SwingConstants.CENTER);
+        topLabel.setForeground(Settings.ACCENT);
+        topLabel.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+        topLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
+
+        JLabel bottomLabel = new JLabel("DRAW HERE!!", SwingConstants.CENTER);
+        bottomLabel.setForeground(Settings.ACCENT);
+        bottomLabel.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+        bottomLabel.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
+
+        // Add to container
+        drawContainer.add(topLabel, BorderLayout.NORTH);
+        drawContainer.add(drawPanel, BorderLayout.CENTER);
+        drawContainer.add(bottomLabel, BorderLayout.SOUTH);
+
+        // ===== ADD TO RIGHT PANEL =====
+        rightPanel.add(guide, BorderLayout.NORTH);
+        rightPanel.add(drawContainer, BorderLayout.SOUTH);
 
         add(gamePanel, BorderLayout.CENTER);
         add(rightPanel, BorderLayout.EAST);
