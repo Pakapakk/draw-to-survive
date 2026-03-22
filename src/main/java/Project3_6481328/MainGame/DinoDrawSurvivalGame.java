@@ -2,6 +2,7 @@ package Project3_6481328.MainGame;
 
 import Project3_6481328.Menu.ScoreManager;
 import Project3_6481328.Menu.WelcomeFrame;
+import Project3_6481328.utils.AudioManager;
 import Project3_6481328.utils.Settings;
 
 import javax.swing.*;
@@ -65,11 +66,14 @@ public class DinoDrawSurvivalGame extends JFrame {
         setResizable(false);
         setVisible(true);
 
+        AudioManager.playMusic(Settings.SFX_GAME_MUSIC);
+
         SwingUtilities.invokeLater(gamePanel::requestFocusInWindow);
     }
 
     public void endGame(int score) {
         ScoreManager.saveScore(playerName, score, selectedDifficulty.toString());
+        AudioManager.stopMusic();
 
         SwingUtilities.invokeLater(() -> {
             String message = """

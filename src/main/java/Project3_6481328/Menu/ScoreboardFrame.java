@@ -1,5 +1,6 @@
 package Project3_6481328.Menu;
 
+import Project3_6481328.utils.AudioManager;
 import Project3_6481328.utils.PixelFont;
 import Project3_6481328.utils.Settings;
 
@@ -100,8 +101,14 @@ public class ScoreboardFrame extends JFrame {
         styleButton(refreshButton, Settings.BUTTON_BLUE);
         styleButton(closeButton, Settings.BUTTON_PURPLE);
 
-        refreshButton.addActionListener(e -> loadScores());
-        closeButton.addActionListener(e -> dispose());
+        refreshButton.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            loadScores();
+        });
+        closeButton.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            dispose();
+        });
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setOpaque(false);

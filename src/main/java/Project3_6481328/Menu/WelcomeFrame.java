@@ -4,6 +4,7 @@ import Project3_6481328.MainGame.Difficulty;
 import Project3_6481328.MainGame.DinoDrawSurvivalGame;
 import Project3_6481328.utils.PixelFont;
 import Project3_6481328.utils.Settings;
+import Project3_6481328.utils.AudioManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -46,6 +47,8 @@ public class WelcomeFrame extends JFrame {
         add(buildCenter(), BorderLayout.CENTER);
         add(buildBottom(), BorderLayout.SOUTH);
 
+        AudioManager.playMusic(Settings.SFX_MENU_MUSIC);
+
         setVisible(true);
     }
 
@@ -61,6 +64,7 @@ public class WelcomeFrame extends JFrame {
         JButton exitBtn = new JButton("EXIT GAME");
         styleInteractiveButton(exitBtn);
         exitBtn.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
             dispose();
             System.exit(0);
         });
@@ -96,7 +100,10 @@ public class WelcomeFrame extends JFrame {
         panel.add(label("DIFFICULTY"));
         difficultyBox = new JComboBox<>(new String[]{"Easy", "Normal", "Hard", "Brutal", "Impossible"});
         styleComboBox(difficultyBox);
-        difficultyBox.addActionListener(e -> updateDifficultyInfo());
+        difficultyBox.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            updateDifficultyInfo();
+        });
 
         difficultyInfoLabel = new JLabel();
         difficultyInfoLabel.setFont(PixelFont.get(Settings.FONT_INPUT));
@@ -120,10 +127,34 @@ public class WelcomeFrame extends JFrame {
 
         panel.add(Box.createVerticalGlue());
 
+        // Volume sliders
+        panel.add(label("MUSIC VOLUME"));
+        JSlider musicSlider = createVolumeSlider((int)(AudioManager.getMusicVolume() * 100));
+        musicSlider.addChangeListener(e ->
+                AudioManager.setMusicVolume(musicSlider.getValue() / 100f));
+        panel.add(musicSlider);
+
+        panel.add(Box.createVerticalStrut(14));
+
+        panel.add(label("SFX VOLUME"));
+        JSlider sfxSlider = createVolumeSlider((int)(AudioManager.getSfxVolume() * 100));
+        sfxSlider.addChangeListener(e -> {
+            AudioManager.setSfxVolume(sfxSlider.getValue() / 100f);
+            if (!sfxSlider.getValueIsAdjusting()) {
+                AudioManager.playSfx(Settings.SFX_BUTTON);
+            }
+        });
+        panel.add(sfxSlider);
+
+        panel.add(Box.createVerticalStrut(14));
+
         JButton instructionsBtn = new JButton("GAME INSTRUCTIONS");
         styleInteractiveButton(instructionsBtn);
         instructionsBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        instructionsBtn.addActionListener(e -> showInstructionsPopup());
+        instructionsBtn.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            showInstructionsPopup();
+        });
         panel.add(instructionsBtn);
 
         return panel;
@@ -194,6 +225,7 @@ public class WelcomeFrame extends JFrame {
         button.addActionListener(e -> {
             selectedSkin = skinName;
             selectedSkinLabel.setText(selectedSkin.toUpperCase());
+            AudioManager.playSfx(Settings.SFX_BUTTON);
             refreshSkinSelectionUI();
         });
 
@@ -284,7 +316,10 @@ public class WelcomeFrame extends JFrame {
 
         JButton closeBtn = new JButton("CLOSE");
         styleInteractiveButton(closeBtn);
-        closeBtn.addActionListener(e -> dialog.dispose());
+        closeBtn.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            dialog.dispose();
+        });
 
         bottom.add(closeBtn);
         main.add(bottom, BorderLayout.SOUTH);
@@ -311,12 +346,18 @@ public class WelcomeFrame extends JFrame {
                 return;
             }
 
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            AudioManager.stopMusic();
+
             Difficulty selectedDifficulty = getSelectedDifficulty();
             new DinoDrawSurvivalGame(name, selectedDifficulty, selectedSkin);
             dispose();
         });
 
-        scoreBtn.addActionListener(e -> new ScoreboardFrame());
+        scoreBtn.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            new ScoreboardFrame();
+        });
 
         panel.add(startBtn);
         panel.add(Box.createHorizontalStrut(14));
@@ -486,6 +527,68 @@ public class WelcomeFrame extends JFrame {
                 return button;
             }
         });
+    }
+
+    private JSlider createVolumeSlider(int initialValue) {
+        JSlider slider = new JSlider(0, 100, initialValue);
+        slider.setBackground(panelBg);
+        slider.setForeground(text);
+        slider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        slider.setAlignmentX(Component.LEFT_ALIGNMENT);
+        slider.setPaintTrack(true);
+        slider.setPaintTicks(false);
+        slider.setPaintLabels(false);
+        slider.setFocusable(false);
+        slider.setBorder(BorderFactory.createEmptyBorder());
+
+        slider.setUI(new javax.swing.plaf.basic.BasicSliderUI(slider) {
+            @Override
+            public void paintFocus(Graphics g) {
+                // suppress the default dotted focus rectangle
+            }
+
+            @Override
+            public void paintTrack(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                Rectangle t = trackRect;
+                int cy     = t.y + t.height / 2;
+                int trackH = 6;
+
+                // Background track
+                g2.setColor(Settings.INPUT_BG);
+                g2.fillRoundRect(t.x, cy - trackH / 2, t.width, trackH, trackH, trackH);
+
+                // Filled portion
+                int fillW = thumbRect.x + thumbRect.width / 2 - t.x;
+                g2.setColor(Settings.ACCENT);
+                g2.fillRoundRect(t.x, cy - trackH / 2, Math.max(0, fillW), trackH, trackH, trackH);
+
+                g2.dispose();
+            }
+
+            @Override
+            public void paintThumb(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int cx = thumbRect.x + thumbRect.width / 2;
+                int cy = thumbRect.y + thumbRect.height / 2;
+                int r  = 8;
+
+                g2.setColor(Settings.ACCENT);
+                g2.fillOval(cx - r, cy - r, r * 2, r * 2);
+
+                g2.setColor(Settings.TEXT_PRIMARY);
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawOval(cx - r, cy - r, r * 2, r * 2);
+
+                g2.dispose();
+            }
+        });
+
+        return slider;
     }
 
     private void styleInteractiveButton(JButton button) {

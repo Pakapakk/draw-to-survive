@@ -1,6 +1,7 @@
 package Project3_6481328.MainGame;
 
 import Project3_6481328.utils.PixelFont;
+import Project3_6481328.utils.AudioManager;
 import Project3_6481328.utils.Settings;
 
 import javax.imageio.ImageIO;
@@ -299,6 +300,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         frozen = true;
         freezeEndTime = now + FREEZE_DURATION_MS;
         freezeCooldownEndTime = now + FREEZE_COOLDOWN_MS;
+        AudioManager.playSfx(Settings.SFX_FREEZE);
         statusText = "FREEZE! All enemies frozen!";
     }
 
@@ -449,6 +451,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         );
 
         statusText = "Incoming Ring: " + ringSymbol.getDisplay();
+        AudioManager.playSfx(Settings.SFX_RING_WARNING);
     }
 
     private void updateRingWarning(long now) {
@@ -537,12 +540,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
                 player.setHealth(player.getHealth() - 1);
                 player.setInvincibleUntil(now + Settings.IFRAMES_DURATION_MS);
+                AudioManager.playSfx(Settings.SFX_HURT);
 
                 addExplosion(enemy.getX(), enemy.getY());
                 it.remove();
 
                 if (player.getHealth() <= 0) {
                     statusText = "Game Over";
+                    AudioManager.playSfx(Settings.SFX_PLAYER_DEAD);
                     triggerGameOver();
                 } else {
                     statusText = "Ouch! " + player.getHealth() + " heart(s) left!";
@@ -561,6 +566,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (predicted == null) {
             statusText = "Unknown spell";
             return;
+        }
+
+        // Play the sound for this symbol type
+        switch (predicted) {
+            case VERTICAL_LINE -> AudioManager.playSfx(Settings.SFX_SPELL_1);
+            case V             -> AudioManager.playSfx(Settings.SFX_SPELL_2);
+            case CIRCLE        -> AudioManager.playSfx(Settings.SFX_SPELL_3);
+            case Z             -> AudioManager.playSfx(Settings.SFX_SPELL_4);
         }
 
         int removed = removeClosestMatchingEnemies(predicted, difficulty.getSpellKillLimit());
@@ -593,6 +606,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             removed++;
         }
 
+        if (removed > 0) {
+            AudioManager.playSfx(Settings.SFX_ENEMY_DEAD);
+        }
+
         return removed;
     }
 
@@ -605,6 +622,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         for (int i = 0; i < removed; i++) {
             Enemy enemy = enemies.remove(0);
             addExplosion(enemy.getX(), enemy.getY());
+        }
+
+        if (removed > 0) {
+            AudioManager.playSfx(Settings.SFX_ENEMY_DEAD);
         }
 
         score += removed * 8;
@@ -1069,6 +1090,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (gameOver) return;
         gameOver = true;
         timer.stop();
+        AudioManager.playSfx(Settings.SFX_GAME_OVER);
         parentFrame.endGame(score);
     }
 

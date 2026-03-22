@@ -29,6 +29,24 @@ public final class Settings {
     public static final String HEART_PATH = PATH + "resources/game_assets/heart.png";
 
     // =========================
+    // Sound Paths
+    // =========================
+    public static final String SOUNDS_PATH = PATH + "resources/sounds/";
+    public static final String SFX_MENU_MUSIC    = SOUNDS_PATH + "menuMusic.wav";
+    public static final String SFX_GAME_MUSIC    = SOUNDS_PATH + "gameMusic.wav";
+    public static final String SFX_BUTTON        = SOUNDS_PATH + "buttonSfx.wav";
+    public static final String SFX_PLAYER_DEAD   = SOUNDS_PATH + "playerDeadSfx.wav";
+    public static final String SFX_ENEMY_DEAD    = SOUNDS_PATH + "enemyDeadSfx.wav";
+    public static final String SFX_SPELL_1       = SOUNDS_PATH + "spellCast_1.wav";
+    public static final String SFX_SPELL_2       = SOUNDS_PATH + "spellCast_2.wav";
+    public static final String SFX_SPELL_3       = SOUNDS_PATH + "spellCast_3.wav";
+    public static final String SFX_SPELL_4       = SOUNDS_PATH + "spellCast_4.wav";
+    public static final String SFX_FREEZE        = SOUNDS_PATH + "spellFreeze.wav";
+    public static final String SFX_RING_WARNING  = SOUNDS_PATH + "circleWarning.wav";
+    public static final String SFX_GAME_OVER     = SOUNDS_PATH + "gameOver.wav";
+    public static final String SFX_HURT     = SOUNDS_PATH + "playerHurt.wav";
+
+    // =========================
     // Player Skins
     // =========================
     public static final String PLAYER_SKINS_BASE_PATH = PATH + "resources/game_assets/player_skins/";
