@@ -533,18 +533,59 @@ public class WelcomeFrame extends JFrame {
         JSlider slider = new JSlider(0, 100, initialValue);
         slider.setBackground(panelBg);
         slider.setForeground(text);
-        slider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         slider.setAlignmentX(Component.LEFT_ALIGNMENT);
+        slider.setFocusable(false);
+        slider.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
+
+        Dimension sliderSize = new Dimension(Integer.MAX_VALUE, 32);
+        slider.setMaximumSize(sliderSize);
+        slider.setPreferredSize(sliderSize);
+        slider.setMinimumSize(new Dimension(120, 32));
+
         slider.setPaintTrack(true);
         slider.setPaintTicks(false);
         slider.setPaintLabels(false);
-        slider.setFocusable(false);
-        slider.setBorder(BorderFactory.createEmptyBorder());
+        slider.setSnapToTicks(false);
+        slider.setOpaque(true);
+        slider.setDoubleBuffered(true);
 
         slider.setUI(new javax.swing.plaf.basic.BasicSliderUI(slider) {
+            private final int TRACK_HEIGHT = 6;
+            private final int THUMB_SIZE = 16;
+
+            @Override
+            public void paint(Graphics g, JComponent c) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(panelBg);
+                g2.fillRect(0, 0, c.getWidth(), c.getHeight());
+                super.paint(g2, c);
+                g2.dispose();
+            }
+
             @Override
             public void paintFocus(Graphics g) {
-                // suppress the default dotted focus rectangle
+            }
+
+            @Override
+            public void paintTicks(Graphics g) {
+            }
+
+            @Override
+            public void paintLabels(Graphics g) {
+            }
+
+            @Override
+            protected Dimension getThumbSize() {
+                return new Dimension(THUMB_SIZE, THUMB_SIZE);
+            }
+
+            @Override
+            public void setThumbLocation(int x, int y) {
+                Rectangle oldRect = new Rectangle(thumbRect);
+                super.setThumbLocation(x, y);
+
+                Rectangle union = oldRect.union(thumbRect);
+                slider.repaint(union.x - 4, union.y - 4, union.width + 8, union.height + 8);
             }
 
             @Override
@@ -552,18 +593,19 @@ public class WelcomeFrame extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                Rectangle t = trackRect;
-                int cy     = t.y + t.height / 2;
-                int trackH = 6;
+                int trackX = trackRect.x;
+                int trackY = trackRect.y + (trackRect.height - TRACK_HEIGHT) / 2;
+                int trackW = trackRect.width;
+                int arc = TRACK_HEIGHT;
 
-                // Background track
                 g2.setColor(Settings.INPUT_BG);
-                g2.fillRoundRect(t.x, cy - trackH / 2, t.width, trackH, trackH, trackH);
+                g2.fillRoundRect(trackX, trackY, trackW, TRACK_HEIGHT, arc, arc);
 
-                // Filled portion
-                int fillW = thumbRect.x + thumbRect.width / 2 - t.x;
+                int thumbCenterX = thumbRect.x + thumbRect.width / 2;
+                int fillW = Math.max(0, thumbCenterX - trackX);
+
                 g2.setColor(Settings.ACCENT);
-                g2.fillRoundRect(t.x, cy - trackH / 2, Math.max(0, fillW), trackH, trackH, trackH);
+                g2.fillRoundRect(trackX, trackY, fillW, TRACK_HEIGHT, arc, arc);
 
                 g2.dispose();
             }
@@ -573,16 +615,17 @@ public class WelcomeFrame extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                int cx = thumbRect.x + thumbRect.width / 2;
-                int cy = thumbRect.y + thumbRect.height / 2;
-                int r  = 8;
+                int x = thumbRect.x;
+                int y = thumbRect.y;
+                int w = thumbRect.width;
+                int h = thumbRect.height;
 
                 g2.setColor(Settings.ACCENT);
-                g2.fillOval(cx - r, cy - r, r * 2, r * 2);
+                g2.fillOval(x, y, w, h);
 
                 g2.setColor(Settings.TEXT_PRIMARY);
                 g2.setStroke(new BasicStroke(2f));
-                g2.drawOval(cx - r, cy - r, r * 2, r * 2);
+                g2.drawOval(x, y, w, h);
 
                 g2.dispose();
             }
