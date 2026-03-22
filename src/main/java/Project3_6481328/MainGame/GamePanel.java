@@ -43,6 +43,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean gameOver = false;
 
     private boolean up, down, left, right;
+    private boolean facingLeft = false;
 
     private static final long FREEZE_DURATION_MS = 1000;
     private static final long FREEZE_COOLDOWN_MS = 10000;
@@ -322,8 +323,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             vy /= len;
         }
 
-        player.setX(clamp(player.getX() + vx * player.getSpeed() * dt, player.getRadius(), WIDTH - player.getRadius()));
-        player.setY(clamp(player.getY() + vy * player.getSpeed() * dt, player.getRadius(), HEIGHT - player.getRadius()));
+        if (vx < 0) {
+            facingLeft = true;
+        } else if (vx > 0) {
+            facingLeft = false;
+        }
+
+        player.setX(clamp(
+                player.getX() + vx * player.getSpeed() * dt,
+                player.getRadius(),
+                WIDTH - player.getRadius()
+        ));
+        player.setY(clamp(
+                player.getY() + vy * player.getSpeed() * dt,
+                player.getRadius(),
+                HEIGHT - player.getRadius()
+        ));
     }
 
     private void updateBomb(long now) {
@@ -716,58 +731,51 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawPlayer(Graphics2D g2) {
-        int x = (int) player.getX();
-        int y = (int) player.getY();
-
         long now = System.currentTimeMillis();
+        int cx = (int) player.getX();
+        int cy = (int) player.getY();
+        int size = Settings.PLAYER_DRAW_SIZE;
+
         boolean invincible = player.isInvincible(now);
         boolean moving = up || down || left || right;
         boolean dead = player.getHealth() <= 0;
+        boolean hurt = invincible && !dead;
 
         ImageIcon currentGif;
         if (dead) {
             currentGif = playerDeadGif;
-        } else if (invincible) {
-            currentGif = playerHurtGif != null ? playerHurtGif : playerIdleGif;
+        } else if (hurt) {
+            currentGif = (playerHurtGif != null) ? playerHurtGif : playerIdleGif;
         } else if (moving) {
-            currentGif = playerMoveGif != null ? playerMoveGif : playerIdleGif;
+            currentGif = (playerMoveGif != null) ? playerMoveGif : playerIdleGif;
         } else {
             currentGif = playerIdleGif;
         }
 
-        int size = Settings.PLAYER_DRAW_SIZE;
+        // Blink effect during i-frames
+        // Visible 80ms, hidden 80ms
+        if (invincible && !dead) {
+            boolean hideFrame = ((now / 80) % 2 == 0);
+            if (hideFrame) {
+                return;
+            }
+        }
 
         if (currentGif != null && currentGif.getIconWidth() > 0) {
-            if (invincible) {
-                boolean flashOn = ((now / 120) % 2 == 0);
-                if (!flashOn) {
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
-                }
+            int drawX = cx - size / 2;
+            int drawY = cy - size / 2;
+
+            if (facingLeft) {
+                g2.drawImage(currentGif.getImage(), drawX + size, drawY, -size, size, this);
+            } else {
+                g2.drawImage(currentGif.getImage(), drawX, drawY, size, size, this);
             }
-
-            g2.drawImage(
-                    currentGif.getImage(),
-                    x - size / 2,
-                    y - size / 2,
-                    size,
-                    size,
-                    this
-            );
-
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         } else {
             int r = (int) player.getRadius();
-
-            if (invincible) {
-                boolean flashOn = ((now / 120) % 2 == 0);
-                g2.setColor(flashOn ? new Color(255, 80, 80) : new Color(200, 60, 60, 160));
-            } else {
-                g2.setColor(Settings.TEXT_PRIMARY);
-            }
-
-            g2.fillOval(x - r, y - r, r * 2, r * 2);
-            g2.setColor(invincible ? new Color(255, 120, 120) : Settings.PLAYER_OUTLINE);
-            g2.drawOval(x - r, y - r, r * 2, r * 2);
+            g2.setColor(hurt ? new Color(255, 80, 80) : Settings.TEXT_PRIMARY);
+            g2.fillOval(cx - r, cy - r, r * 2, r * 2);
+            g2.setColor(Settings.PLAYER_OUTLINE);
+            g2.drawOval(cx - r, cy - r, r * 2, r * 2);
         }
     }
 
