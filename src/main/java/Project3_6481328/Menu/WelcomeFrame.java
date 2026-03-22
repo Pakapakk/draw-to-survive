@@ -435,6 +435,14 @@ public class WelcomeFrame extends JFrame {
         });
 
         comboBox.setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+
+            @Override
+            public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
+                // Force the selected-display area to always be your dark color
+                g.setColor(Color.BLACK);
+                g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+            }
+
             @Override
             protected JButton createArrowButton() {
                 JButton button = new JButton() {

@@ -15,7 +15,7 @@ public class AutoPredictDrawPanel extends JPanel {
 
     private int lastX, lastY;
 
-    private final JLabel resultLabel;
+    //private final JLabel resultLabel;
     private final SpellRecognizer recognizer;
     private final GamePanel gamePanel;
 
@@ -33,13 +33,13 @@ public class AutoPredictDrawPanel extends JPanel {
         setLayout(new BorderLayout());
         setOpaque(false);
 
-        resultLabel = new JLabel("Prediction: -", SwingConstants.CENTER);
-        resultLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        resultLabel.setForeground(Color.WHITE);
+//        resultLabel = new JLabel("Prediction: -", SwingConstants.CENTER);
+//        resultLabel.setFont(new Font("Arial", Font.BOLD, 18));
+//        resultLabel.setForeground(Color.WHITE);
 
         JPanel top = new JPanel(new BorderLayout());
         top.setBackground(new Color(20, 20, 20));
-        top.add(resultLabel, BorderLayout.CENTER);
+        //top.add(resultLabel, BorderLayout.CENTER);
 
         DrawSurface surface = new DrawSurface(width, height);
 
@@ -152,12 +152,11 @@ public class AutoPredictDrawPanel extends JPanel {
         PredictionResult result = recognizer.recognizeDetailed(copy);
         String label = result.getLabel();
 
-        resultLabel.setText(
-                "Prediction: " + label +
-                        " | d=" + String.format("%.3f", result.getDistance())
-        );
+//        resultLabel.setText(
+//                "Prediction: " + label +
+//                        " | d=" + String.format("%.3f", result.getDistance())
+//        );
 
-        // 🔥 SEND TO GAME LOGIC
         gamePanel.castSpell(label);
     }
 
