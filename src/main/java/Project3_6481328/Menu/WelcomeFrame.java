@@ -394,8 +394,8 @@ public class WelcomeFrame extends JFrame {
                         "- Menu SFX  •  UI Soundpack / Nathan Gibson\n\n" +
                         "─────────────────────────────\n\n" +
                         "ASSETS:\n\n" +
-                        "- Pixel Art Sprites  •  Dino Family / DemChing\n" +
-                        "- Font: VT323         •  Peter Hull (Google Fonts)\n\n" +
+                        "- Pixel Art Sprites    •  Dino Family / DemChing\n" +
+                        "- Font: VT323          •  Peter Hull (Google Fonts)\n\n" +
                         "─────────────────────────────\n\n" +
                         "DISCLAIMER\n\n" +
                         "This game was created as an academic project for EGCI213 (Programming Paradigms)\n" +
