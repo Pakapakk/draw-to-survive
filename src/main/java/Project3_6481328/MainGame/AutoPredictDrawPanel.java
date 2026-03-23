@@ -24,7 +24,7 @@ public class AutoPredictDrawPanel extends JPanel {
     private volatile boolean hasPendingStroke = false;
     private volatile boolean isDrawing = false;
 
-    private static final long AUTO_PREDICT_DELAY_MS = 50;
+    private static final long AUTO_PREDICT_DELAY_MS = 0;
 
     public AutoPredictDrawPanel(int width, int height, GamePanel gamePanel) {
         this.gamePanel = gamePanel;
