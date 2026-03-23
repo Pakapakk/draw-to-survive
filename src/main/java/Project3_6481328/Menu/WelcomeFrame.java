@@ -24,7 +24,6 @@ public class WelcomeFrame extends JFrame {
     private String selectedSkin = Settings.DEFAULT_PLAYER_SKIN;
 
     private final Map<String, JButton> skinButtons = new LinkedHashMap<>();
-    private JLabel selectedSkinLabel;
 
     private final Color bg = Settings.BG;
     private final Color panelBg = Settings.PANEL_BG;
@@ -57,7 +56,7 @@ public class WelcomeFrame extends JFrame {
         panel.setBackground(bg);
         panel.setBorder(new EmptyBorder(24, 24, 10, 24));
 
-        JLabel title = new JLabel("DRAW TO SURVIVE");
+        JLabel title = new JLabel("DINO-DRAW SURVIVAL GAME");
         title.setFont(PixelFont.get(Settings.FONT_TITLE_BIG));
         title.setForeground(text);
 
@@ -116,14 +115,6 @@ public class WelcomeFrame extends JFrame {
         updateDifficultyInfo();
 
         panel.add(Box.createVerticalStrut(28));
-
-        panel.add(label("CURRENT SKIN"));
-        selectedSkinLabel = new JLabel(selectedSkin.toUpperCase());
-        selectedSkinLabel.setForeground(Settings.ACCENT);
-        selectedSkinLabel.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
-        selectedSkinLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        selectedSkinLabel.setBorder(new EmptyBorder(6, 2, 0, 0));
-        panel.add(selectedSkinLabel);
 
         panel.add(Box.createVerticalGlue());
 
@@ -213,8 +204,8 @@ public class WelcomeFrame extends JFrame {
 
         String previewPath = Settings.getPlayerIdlePath(skinName);
 
-        ImageIcon staticPreview = loadStaticSkinPreview(previewPath, 42, 42);
-        ImageIcon animatedPreview = loadAnimatedSkinPreview(previewPath, 42, 42);
+        ImageIcon staticPreview = loadStaticSkinPreview(previewPath, 48, 48);
+        ImageIcon animatedPreview = loadAnimatedSkinPreview(previewPath, 48, 48);
 
         if (staticPreview != null) {
             button.setIcon(staticPreview);
@@ -224,7 +215,6 @@ public class WelcomeFrame extends JFrame {
 
         button.addActionListener(e -> {
             selectedSkin = skinName;
-            selectedSkinLabel.setText(selectedSkin.toUpperCase());
             AudioManager.playSfx(Settings.SFX_BUTTON);
             refreshSkinSelectionUI();
         });
@@ -678,29 +668,6 @@ public class WelcomeFrame extends JFrame {
     private String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
-    private ImageIcon loadSkinPreview(String path) {
-        try {
-            File file = new File(path);
-            System.out.println("Trying preview file path: " + path);
-
-            if (!file.exists()) {
-                System.out.println("File does not exist: " + path);
-                return null;
-            }
-
-            Image image = javax.imageio.ImageIO.read(file);
-            if (image == null) {
-                System.out.println("ImageIO could not read: " + path);
-                return null;
-            }
-
-            return new ImageIcon(image);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     private ImageIcon loadStaticSkinPreview(String path, int width, int height) {
