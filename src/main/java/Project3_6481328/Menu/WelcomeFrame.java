@@ -23,7 +23,8 @@ public class WelcomeFrame extends JFrame {
 
     private String selectedSkin = Settings.DEFAULT_PLAYER_SKIN;
 
-    private final Map<String, JButton> skinButtons = new LinkedHashMap<>();
+    private final Map<String, JRadioButton> skinRadioButtons = new LinkedHashMap<>();
+    private final ButtonGroup skinButtonGroup = new ButtonGroup();
 
     private final Color bg = Settings.BG;
     private final Color panelBg = Settings.PANEL_BG;
@@ -163,11 +164,12 @@ public class WelcomeFrame extends JFrame {
         JPanel grid = new JPanel(new GridLayout(0, 2, 8, 8));
         grid.setBackground(panelBg);
 
-        skinButtons.clear();
+        skinRadioButtons.clear();
+        skinButtonGroup.clearSelection();
+
         for (String skin : Settings.AVAILABLE_PLAYER_SKINS) {
-            JButton skinButton = createSkinCardButton(skin);
-            skinButtons.put(skin, skinButton);
-            grid.add(skinButton);
+            JPanel card = createSkinRadioCard(skin);
+            grid.add(card);
         }
 
         refreshSkinSelectionUI();
@@ -179,7 +181,7 @@ public class WelcomeFrame extends JFrame {
 
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        JLabel footer = new JLabel("CLICK A SKIN TO APPLY IT IMMEDIATELY", SwingConstants.CENTER);
+        JLabel footer = new JLabel("SELECT A SKIN TO APPLY IT", SwingConstants.CENTER);
         footer.setForeground(Settings.TEXT_SECONDARY);
         footer.setFont(PixelFont.get(Settings.FONT_SMALL));
         panel.add(footer, BorderLayout.SOUTH);
@@ -187,74 +189,105 @@ public class WelcomeFrame extends JFrame {
         return panel;
     }
 
-    private JButton createSkinCardButton(String skinName) {
-        JButton button = new JButton(capitalize(skinName));
-        button.setFocusPainted(false);
-        button.setBackground(inputBg);
-        button.setForeground(text);
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setContentAreaFilled(true);
-        button.setOpaque(true);
-
-        button.setHorizontalTextPosition(SwingConstants.CENTER);
-        button.setVerticalTextPosition(SwingConstants.BOTTOM);
-        button.setIconTextGap(6);
-        button.setFont(PixelFont.get(Settings.FONT_SMALL));
-        button.setPreferredSize(new Dimension(125, 105));
+    private JPanel createSkinRadioCard(String skinName) {
+        JPanel card = new JPanel(new BorderLayout(0, 4));
+        card.setBackground(inputBg);
+        card.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        card.setPreferredSize(new Dimension(125, 110));
 
         String previewPath = Settings.getPlayerIdlePath(skinName);
-
-        ImageIcon staticPreview = loadStaticSkinPreview(previewPath, 48, 48);
+        ImageIcon staticPreview   = loadStaticSkinPreview(previewPath, 48, 48);
         ImageIcon animatedPreview = loadAnimatedSkinPreview(previewPath, 48, 48);
 
+        JLabel imageLabel = new JLabel("", SwingConstants.CENTER);
+        imageLabel.setOpaque(false);
         if (staticPreview != null) {
-            button.setIcon(staticPreview);
+            imageLabel.setIcon(staticPreview);
         } else {
-            System.out.println("Missing static skin preview: " + previewPath);
+            imageLabel.setText("?");
+            imageLabel.setForeground(Settings.TEXT_SECONDARY);
         }
+        imageLabel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
-        button.addActionListener(e -> {
+        JRadioButton radio = new JRadioButton(capitalize(skinName));
+        radio.setHorizontalAlignment(SwingConstants.CENTER);
+        radio.setOpaque(false);
+        radio.setForeground(text);
+        radio.setFont(PixelFont.get(Settings.FONT_SMALL));
+        radio.setFocusPainted(false);
+        radio.setBorder(new EmptyBorder(0, 0, 6, 0));
+        radio.setIcon(new Icon() {
+            public void paintIcon(Component c, Graphics g, int x, int y) {}
+            public int getIconWidth()  { return 0; }
+            public int getIconHeight() { return 0; }
+        });
+        radio.setSelectedIcon(new Icon() {
+            public void paintIcon(Component c, Graphics g, int x, int y) {}
+            public int getIconWidth()  { return 0; }
+            public int getIconHeight() { return 0; }
+        });
+
+        skinButtonGroup.add(radio);
+        skinRadioButtons.put(skinName, radio);
+
+        card.add(imageLabel, BorderLayout.CENTER);
+        card.add(radio, BorderLayout.SOUTH);
+
+        radio.addActionListener(e -> {
             selectedSkin = skinName;
             AudioManager.playSfx(Settings.SFX_BUTTON);
             refreshSkinSelectionUI();
         });
 
-        button.addMouseListener(new MouseAdapter() {
+        MouseAdapter cardClick = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                radio.setSelected(true);
+                selectedSkin = skinName;
+                AudioManager.playSfx(Settings.SFX_BUTTON);
+                refreshSkinSelectionUI();
+            }
+
             @Override
             public void mouseEntered(MouseEvent e) {
+                if (animatedPreview != null) imageLabel.setIcon(animatedPreview);
                 if (!skinName.equalsIgnoreCase(selectedSkin)) {
-                    button.setBackground(new Color(34, 40, 58));
-                    button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
-                }
-
-                if (animatedPreview != null) {
-                    button.setIcon(animatedPreview);
+                    card.setBackground(new Color(34, 40, 58));
+                    card.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
                 }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                if (staticPreview != null) {
-                    button.setIcon(staticPreview);
-                }
+                if (staticPreview != null) imageLabel.setIcon(staticPreview);
                 refreshSkinSelectionUI();
             }
-        });
+        };
 
-        return button;
+        card.addMouseListener(cardClick);
+        imageLabel.addMouseListener(cardClick);
+
+        return card;
     }
 
     private void refreshSkinSelectionUI() {
-        for (Map.Entry<String, JButton> entry : skinButtons.entrySet()) {
-            String skin = entry.getKey();
-            JButton button = entry.getValue();
+        for (Map.Entry<String, JRadioButton> entry : skinRadioButtons.entrySet()) {
+            String skin        = entry.getKey();
+            JRadioButton radio = entry.getValue();
+            JPanel card        = (JPanel) radio.getParent();
 
-            if (skin.equalsIgnoreCase(selectedSkin)) {
-                button.setBorder(BorderFactory.createLineBorder(Settings.ACCENT, 3));
-                button.setBackground(new Color(40, 32, 68));
-            } else {
-                button.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
-                button.setBackground(inputBg);
+            boolean selected = skin.equalsIgnoreCase(selectedSkin);
+            radio.setSelected(selected);
+
+            if (card != null) {
+                if (selected) {
+                    card.setBackground(new Color(40, 32, 68));
+                    card.setBorder(BorderFactory.createLineBorder(Settings.ACCENT, 3));
+                } else {
+                    card.setBackground(inputBg);
+                    card.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
+                }
             }
         }
     }
