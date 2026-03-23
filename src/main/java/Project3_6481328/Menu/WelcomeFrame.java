@@ -142,12 +142,25 @@ public class WelcomeFrame extends JFrame {
 
         JButton instructionsBtn = new JButton("GAME INSTRUCTIONS");
         styleInteractiveButton(instructionsBtn);
-        instructionsBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         instructionsBtn.addActionListener(e -> {
             AudioManager.playSfx(Settings.SFX_BUTTON);
             showInstructionsPopup();
         });
-        panel.add(instructionsBtn);
+
+        JButton creditsBtn = new JButton("CREDITS");
+        styleInteractiveButton(creditsBtn);
+        creditsBtn.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            showCreditsPopup();
+        });
+
+        JPanel btnRow = new JPanel(new GridLayout(1, 2, 8, 0));
+        btnRow.setOpaque(false);
+        btnRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        btnRow.add(instructionsBtn);
+        btnRow.add(creditsBtn);
+        panel.add(btnRow);
 
         return panel;
     }
@@ -349,6 +362,85 @@ public class WelcomeFrame extends JFrame {
 
         dialog.setVisible(true);
     }
+    private void showCreditsPopup() {
+        JDialog dialog = new JDialog(this, "Credits", true);
+        dialog.setSize(560, 480);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        JPanel main = new JPanel(new BorderLayout(12, 12));
+        main.setBackground(Settings.BG);
+        main.setBorder(new EmptyBorder(18, 18, 18, 18));
+        dialog.setContentPane(main);
+
+        JLabel title = new JLabel("CREDITS", SwingConstants.CENTER);
+        title.setForeground(Settings.TEXT_PRIMARY);
+        title.setFont(PixelFont.get(Settings.FONT_TITLE_MEDIUM));
+        main.add(title, BorderLayout.NORTH);
+
+        JTextArea area = new JTextArea(
+                "DEVELOPMENT TEAM:\n\n" +
+                        "- Pakapak Jungjaroen       (ID: 6481328)\n" +
+                        "- Tanadol Chuntarasupt     (ID: 6481259)\n" +
+                        "- Steven Jonatan           (ID: 6881006)\n" +
+                        "- Jimin Kim                (ID: 6680046)\n\n" +
+                        "─────────────────────────────\n\n" +
+                        "MUSIC:\n\n" +
+                        "- Background Music  •  Serge Quadrado\n" +
+                        "- Game Music        •  Dimitrios Gkorilas\n\n" +
+                        "─────────────────────────────\n\n" +
+                        "SOUND EFFECTS:\n\n" +
+                        "- Game SFX  •  Magic Spells Vol 2 / AmbroggioMusic\n" +
+                        "- Menu SFX  •  UI Soundpack / Nathan Gibson\n\n" +
+                        "─────────────────────────────\n\n" +
+                        "ASSETS:\n\n" +
+                        "- Pixel Art Sprites  •  Dino Family / DemChing\n" +
+                        "- Font: VT323         •  Peter Hull (Google Fonts)\n\n" +
+                        "─────────────────────────────\n\n" +
+                        "DISCLAIMER\n\n" +
+                        "This game was created as an academic project for EGCI213 (Programming Paradigms)\n" +
+                        "at Mahidol University International College (MUIC) in the year 2026.\n" +
+                        "\n" +
+                        "This project is intended solely for educational and demonstration purposes.\n" +
+                        "It is not affiliated with, endorsed by, or produced for any commercial entity.\n" +
+                        "No revenue is generated or intended from this game, and it shall not be used " +
+                        "for any commercial purpose without prior written consent from the authors.\n" +
+                        "\n" +
+                        "Any assets, music, or sound effects used remain the property of their " +
+                        "respective creators and are used here under educational fair use.\n" +
+                        "\n" +
+                        "© 2026 EGCI213 Group Project — MUIC. All rights reserved."
+        );
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBackground(Settings.PANEL_BG);
+        area.setForeground(Settings.TEXT_PRIMARY);
+        area.setFont(PixelFont.get(Settings.FONT_INPUT));
+        area.setBorder(new EmptyBorder(14, 14, 14, 14));
+
+        JScrollPane scrollPane = new JScrollPane(area);
+        scrollPane.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
+        scrollPane.getViewport().setBackground(Settings.PANEL_BG);
+
+        main.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel();
+        bottom.setBackground(Settings.BG);
+
+        JButton closeBtn = new JButton("CLOSE");
+        styleInteractiveButton(closeBtn);
+        closeBtn.addActionListener(e -> {
+            AudioManager.playSfx(Settings.SFX_BUTTON);
+            dialog.dispose();
+        });
+
+        bottom.add(closeBtn);
+        main.add(bottom, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
 
     private JPanel buildBottom() {
         JPanel panel = new JPanel();
