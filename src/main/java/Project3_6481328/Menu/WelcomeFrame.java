@@ -207,7 +207,7 @@ public class WelcomeFrame extends JFrame {
         card.setBackground(inputBg);
         card.setBorder(BorderFactory.createLineBorder(Settings.CARD_BORDER, 2));
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        card.setPreferredSize(new Dimension(125, 110));
+        card.setPreferredSize(new Dimension(125, 105));
 
         String previewPath = Settings.getPlayerIdlePath(skinName);
         ImageIcon staticPreview   = loadStaticSkinPreview(previewPath, 48, 48);
