@@ -26,7 +26,7 @@ public class ScoreboardFrame extends JFrame {
     private static final int HEIGHT = Settings.GAME_HEIGHT;
 
     public ScoreboardFrame() {
-        setTitle("Draw To Survive - Scoreboard");
+        setTitle("Dino-Draw Survival Game - Scoreboard");
         setSize(WIDTH, HEIGHT);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());

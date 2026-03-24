@@ -35,8 +35,10 @@ public class WelcomeFrame extends JFrame {
     private static final int WIDTH = Settings.GAME_WIDTH;
     private static final int HEIGHT = Settings.GAME_HEIGHT;
 
+    private ImageIcon gameTitle;
+
     public WelcomeFrame() {
-        setTitle("Draw To Survive");
+        setTitle("Dino-Draw Survival Game");
         setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -57,9 +59,20 @@ public class WelcomeFrame extends JFrame {
         panel.setBackground(bg);
         panel.setBorder(new EmptyBorder(24, 24, 10, 24));
 
-        JLabel title = new JLabel("DINO-DRAW SURVIVAL GAME");
-        title.setFont(PixelFont.get(Settings.FONT_TITLE_BIG));
-        title.setForeground(text);
+        ImageIcon icon = new ImageIcon(Settings.GAME_TITLE_FILE_PATH);
+
+        JLabel title;
+
+//        if (icon.getIconWidth() > 0) {
+//            Image scaled = icon.getImage().getScaledInstance(150, -1, Image.SCALE_FAST);
+//            title = new JLabel(new ImageIcon(scaled));
+//
+//        } else {
+            System.out.println("Failed to load title image: ");
+            title = new JLabel("DINO-DRAW SURVIVAL GAME");
+            title.setFont(PixelFont.get(Settings.FONT_TITLE_BIG));
+            title.setForeground(text);
+//        }
 
         JButton exitBtn = new JButton("EXIT GAME");
         styleInteractiveButton(exitBtn);
@@ -362,6 +375,7 @@ public class WelcomeFrame extends JFrame {
 
         dialog.setVisible(true);
     }
+
     private void showCreditsPopup() {
         JDialog dialog = new JDialog(this, "Credits", true);
         dialog.setSize(560, 480);
@@ -440,7 +454,6 @@ public class WelcomeFrame extends JFrame {
 
         dialog.setVisible(true);
     }
-
 
     private JPanel buildBottom() {
         JPanel panel = new JPanel();
@@ -834,4 +847,6 @@ public class WelcomeFrame extends JFrame {
             return null;
         }
     }
+
+
 }
