@@ -19,7 +19,7 @@ public class DinoDrawSurvivalGame extends JFrame {
     private final AutoPredictDrawPanel drawPanel;
 
     public DinoDrawSurvivalGame(String playerName, Difficulty selectedDifficulty, String selectedSkin) {
-        super("Draw To Survive");
+        super("Dino-Draw Survival Game");
 
         this.playerName = playerName;
         this.selectedDifficulty = selectedDifficulty;
