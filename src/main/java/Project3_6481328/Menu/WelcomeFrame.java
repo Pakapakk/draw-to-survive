@@ -45,6 +45,39 @@ public class WelcomeFrame extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(bg);
 
+        try {
+            java.util.List<Image> icons = new java.util.ArrayList<>();
+            java.awt.image.BufferedImage taskbarImg = javax.imageio.ImageIO.read(new java.io.File(Settings.TASKBAR_ICON_PATH));
+            if (taskbarImg != null) {
+                // Crop transparent padding so the dino fills the icon
+                int minX = taskbarImg.getWidth(), minY = taskbarImg.getHeight(), maxX = 0, maxY = 0;
+                for (int y = 0; y < taskbarImg.getHeight(); y++)
+                    for (int x = 0; x < taskbarImg.getWidth(); x++)
+                        if ((taskbarImg.getRGB(x, y) >>> 24) > 10) {
+                            if (x < minX) minX = x; if (x > maxX) maxX = x;
+                            if (y < minY) minY = y; if (y > maxY) maxY = y;
+                        }
+                if (maxX > minX && maxY > minY)
+                    taskbarImg = taskbarImg.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
+
+                for (int size : new int[]{16, 32, 48, 64, 128, 256}) {
+                    java.awt.image.BufferedImage scaled = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g2 = scaled.createGraphics();
+                    g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    g2.drawImage(taskbarImg, 0, 0, size, size, null);
+                    g2.dispose();
+                    icons.add(scaled);
+                }
+            }
+            if (!icons.isEmpty()) setIconImages(icons);
+            if (java.awt.Taskbar.isTaskbarSupported()) {
+                java.awt.Taskbar taskbar = java.awt.Taskbar.getTaskbar();
+                try {
+                    taskbar.setIconImage(taskbarImg);
+                } catch (UnsupportedOperationException ignored) {}
+            }
+        } catch (Exception ignored) {}
+
         add(buildHeader(), BorderLayout.NORTH);
         add(buildCenter(), BorderLayout.CENTER);
         add(buildBottom(), BorderLayout.SOUTH);
@@ -68,10 +101,10 @@ public class WelcomeFrame extends JFrame {
 //            title = new JLabel(new ImageIcon(scaled));
 //
 //        } else {
-            System.out.println("Failed to load title image: ");
-            title = new JLabel("DINO-DRAW SURVIVAL GAME");
-            title.setFont(PixelFont.get(Settings.FONT_TITLE_BIG));
-            title.setForeground(text);
+//        System.out.println("Failed to load title image: ");
+        title = new JLabel("DINO-DRAW SURVIVAL GAME");
+        title.setFont(PixelFont.get(Settings.FONT_TITLE_BIG));
+        title.setForeground(text);
 //        }
 
         JButton exitBtn = new JButton("EXIT GAME");

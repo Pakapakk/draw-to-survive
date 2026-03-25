@@ -52,6 +52,8 @@ public final class Settings {
     // =========================
     public static final String PLAYER_SKINS_BASE_PATH = PATH + "resources/game_assets/player_skins/";
     public static final String DEFAULT_PLAYER_SKIN = "white";
+    public static final String WINDOW_ICON_PATH = PATH + "resources/game_icon/icon.png";
+    public static final String TASKBAR_ICON_PATH = PATH + "resources/game_icon/taskbar_icon.png";
 
     public static final String[] AVAILABLE_PLAYER_SKINS = {
             "white", "brown", "green", "grey", "pink", "purple"
