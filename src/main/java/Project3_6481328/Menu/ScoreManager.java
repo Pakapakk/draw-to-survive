@@ -11,10 +11,22 @@ public class ScoreManager {
     private static final String PATH = Settings.SCORE_FILE_PATH;
 
     public static void saveScore(String name, int score, String difficulty) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(PATH, true))) {
-            String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-            bw.write(name + "," + score + "," + difficulty + "," + timestamp);
-            bw.newLine();
+        try {
+            File file = new File(PATH);
+
+            file.getParentFile().mkdirs();
+
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
+                String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+                bw.write(name + "," + score + "," + difficulty + "," + timestamp);
+                bw.newLine();
+                System.out.println("Score saved");
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

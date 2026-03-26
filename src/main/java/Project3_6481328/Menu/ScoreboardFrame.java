@@ -25,6 +25,8 @@ public class ScoreboardFrame extends JFrame {
     private static final int WIDTH = Settings.GAME_WIDTH;
     private static final int HEIGHT = Settings.GAME_HEIGHT;
 
+    private JLabel emptyLabel;
+
     public ScoreboardFrame() {
         setTitle("Dino-Draw Survival Game - Scoreboard");
         setSize(WIDTH, HEIGHT);
@@ -86,8 +88,29 @@ public class ScoreboardFrame extends JFrame {
 
         JScrollPane scrollPane = new JScrollPane(scoreList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setBackground(Settings.ROW_B);
+        scrollPane.getViewport().setBackground(Settings.ROW_B);
 
-        card.add(scrollPane, BorderLayout.CENTER);
+        emptyLabel = new JLabel("NO SCORES YET", SwingConstants.CENTER);
+        emptyLabel.setForeground(subText);
+        emptyLabel.setFont(PixelFont.get(Settings.FONT_SMALL));
+        emptyLabel.setOpaque(true);
+        emptyLabel.setBackground(Settings.ROW_B);
+        emptyLabel.setVisible(false);
+
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new OverlayLayout(contentPanel));
+        contentPanel.setBackground(panelBg);
+
+        scrollPane.setAlignmentX(0.5f);
+        scrollPane.setAlignmentY(0.5f);
+        emptyLabel.setAlignmentX(0.5f);
+        emptyLabel.setAlignmentY(0.5f);
+
+        contentPanel.add(emptyLabel);
+        contentPanel.add(scrollPane);
+
+        card.add(contentPanel, BorderLayout.CENTER);
         center.add(card, BorderLayout.CENTER);
 
         return center;
@@ -135,9 +158,13 @@ public class ScoreboardFrame extends JFrame {
         List<ScoreEntry> scores = ScoreManager.loadScoreEntries();
 
         if (scores.isEmpty()) {
-            listModel.addElement(new ScoreEntry("No scores yet", 0, "-", "-"));
+            emptyLabel.setVisible(true);
+            scoreList.setVisible(false);
             return;
         }
+
+        emptyLabel.setVisible(false);
+        scoreList.setVisible(true);
 
         int limit = Math.min(10, scores.size());
         for (int i = 0; i < limit; i++) {
